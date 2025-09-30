@@ -1,13 +1,34 @@
+
+<!-- 登录表单 -->
 <form id="login-form">
-  <input id="login-email" type="email" placeholder="Email" required>
-  <input id="login-password" type="password" placeholder="Password" required>
-  <button class="primary" type="submit">Login</button>
+  <input id="login-username" type="text" placeholder="用户名" required>
+  <input id="login-password" type="password" placeholder="密码" required>
+  <button class="primary" type="submit">登录</button>
+  <button type="button" id="send-code">验证码</button>
+  <button type="button" id="show-register">创建账号</button>
   <div id="login-error" class="error"></div>
 </form>
 
+<!-- 注册表单 -->
 <form id="register-form" style="display:none">
-  <input id="reg-email" type="email" placeholder="Email" required>
-  <input id="reg-password" type="password" placeholder="Password" required>
-  <button class="primary" type="submit">Create account</button>
+  <input id="reg-username" type="text" placeholder="用户名" required>
+  <input id="reg-password" type="password" placeholder="密码" required>
+  <input id="reg-code" type="text" placeholder="行业模板码" required>
+  <button class="primary" type="submit">创建账号</button>
+  <button type="button" id="show-login">返回登录</button>
   <div id="register-error" class="error"></div>
 </form>
+
+<!-- Setup Page（首次登录后填写基本信息） -->
+<form id="setup-form" style="display:none">
+  <h2>完善个人信息</h2>
+  <input id="setup-name" type="text" placeholder="姓名" required>
+  <!-- 可扩展更多信息输入框 -->
+  <button class="primary" type="submit">保存</button>
+  <div id="setup-error" class="error"></div>
+</form>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="main.js"></script>
