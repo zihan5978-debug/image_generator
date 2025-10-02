@@ -1,445 +1,516 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>AI Design Generator</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
-<style>
-body { font-family: Arial, sans-serif; margin:0; }
-.modal-bg {
-position: fixed; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.25); z-index:1000; display:flex; align-items:center; justify-content:center;
-}
-.login-modal {
-background:#fff; border-radius:10px; box-shadow:0 4px 24px #0002; padding:32px 28px; min-width:340px; max-width:98vw; width:400px;
-}
-.login-modal h2 { text-align:center; color:#007bff; margin-bottom:18px; }
-.login-modal label { display:block; margin-top:12px; }
-.login-modal input { width:100%; padding:8px; margin-top:4px; border:1px solid #ccc; border-radius:4px; }
-.login-modal button { width:100%; padding:10px; margin-top:18px; background:#007bff; color:#fff; border:none; border-radius:4px; font-size:16px; cursor:pointer; }
-.login-modal button:hover { background:#0056b3; }
-.login-modal .msg { color:#e74c3c; text-align:center; min-height:22px; margin-top:10px; }
-.login-modal .switch-link { text-align:center; margin-top:12px; font-size:15px; }
-.login-modal .switch-link a { color:#007bff; text-decoration:none; }
-.login-modal .switch-link a:hover { text-decoration:underline; }
-</style>
-</head>
-<body>
-<div id="main-content">
-<h1>AI Design Generator</h1>
-<div class="controls">
-<div class="row">
-<textarea id="prompt" placeholder="Describe your design (e.g., 'Minimalist product hero shot, studio lighting, soft shadows, high detail')"></textarea>
-</div>
-<div class="row">
-<label>Provider:
-<select id="provider">
-<option value="auto" selected>Auto (Horde -> Pollinations)</option>
-<option value="pollinations">Pollinations only</option>
-<option value="stable_horde">Stable Horde only</option>
-<option value="one_each">One from each</option>
-</select>
-</label>
-<label>Count:
-<input id="count" type="number" min="1" max="8" value="3"/>
-</label>
-<label>Aspect ratio:
-<select id="aspect">
-<option>1:1</option>
-<option selected>3:4</option>
-<option>4:3</option>
-<option>9:16</option>
-<option>16:9</option>
-</select>
-</label>
-<label>Seed (optional):
-<input id="seed" type="number" placeholder="e.g. 12345"/>
-</label>
-</div>
-<div class="row">
-<label>Horde API key (optional):
-<input id="hordeKey" type="text" placeholder="leave empty for anonymous"/>
-</label>
-<label>Horde Proxy URL (optional):
-<input id="hordeProxy" type="text" placeholder="https://your-worker.workers.dev"/>
-</label>
-<button id="go">Generate</button>
-</div>
-<div id="status" class="hint"></div>
-</div>
-<div id="results" class="grid"></div>
-<style>
-.row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
-textarea, input, select, button { padding: 8px; font-size: 14px; }
-textarea { width: 100%; height: 140px; }
-.controls { max-width: 900px; }
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
-.card { border: 1px solid #ddd; border-radius: 8px; padding: 8px; }
-.card img { width: 100%; height: auto; display: block; border-radius: 4px; }
-.hint { color: #666; font-size: 12px; }
-.badge { background:#eee; padding:2px 6px; border-radius: 4px; font-size: 12px; }
-#status { margin: 8px 0; }
-</style>
-</div>
-<div id="login-modal-bg" class="modal-bg" style="display:none;">
-<div class="login-modal">
-<h2 id="modal-title">Sign In</h2>
-<form id="login-form">
-<label for="login-email">Email</label>
-<input id="login-email" type="email" required autocomplete="username" style="width:100%;box-sizing:border-box;">
-<label for="login-password">Password</label>
-<input id="login-password" type="password" required autocomplete="current-password" style="width:100%;box-sizing:border-box;">
-<label for="login-template">Template (optional)</label>
-<input id="login-template" type="text" placeholder="Leave blank for now" style="width:100%;box-sizing:border-box;">
-<button type="submit" id="login-submit">Sign In</button>
-<div class="msg" id="login-msg"></div>
-</form>
-<form id="register-form" style="display:none;">
-<div id="register-step1">
-<label for="register-email">Email</label>
-<div style="display:flex;align-items:center;gap:8px;width:100%;">
-<input id="register-email" type="email" required autocomplete="username" style="flex:1;min-width:120px;max-width:100%;box-sizing:border-box;" />
-<button type="button" id="send-code-btn" style="white-space:nowrap;min-width:90px;">Send Code</button>
-</div>
-<div class="msg" id="register-msg-step1"></div>
-</div>
-<div id="register-step2" style="display:none;">
-<label for="register-code">Verification Code</label>
-<input id="register-code" type="text" required style="width:100%;box-sizing:border-box;">
-<div style="display:flex;gap:8px;margin-top:10px;">
-<button type="button" id="verify-code-btn" style="flex:1;">Verify Code</button>
-<button type="button" id="back-to-step1" style="flex:1;background:#ccc;color:#333;">Back</button>
-</div>
-<div class="msg" id="register-msg-step2"></div>
-</div>
-<div id="register-step3" style="display:none;">
-<label for="register-password">Password</label>
-<input id="register-password" type="password" required autocomplete="new-password" style="width:100%;box-sizing:border-box;">
-<label for="register-password2">Repeat Password</label>
-<input id="register-password2" type="password" required autocomplete="new-password" style="width:100%;box-sizing:border-box;">
-<label for="register-name">Name</label>
-<input id="register-name" type="text" required style="width:100%;box-sizing:border-box;">
-<label for="register-other">Other Info</label>
-<input id="register-other" type="text" style="width:100%;box-sizing:border-box;">
-<div style="display:flex;gap:8px;margin-top:10px;">
-<button type="submit" style="flex:1;">Sign Up</button>
-<button type="button" id="back-to-step2" style="flex:1;background:#ccc;color:#333;">Back</button>
-</div>
-<div class="msg" id="register-msg-step3"></div>
-</div>
-</form>
-<div class="switch-link">
-<span id="switch-to-register">Don't have an account? <a href="#" onclick="showRegister();return false;">Sign up</a></span>
-<span id="switch-to-login" style="display:none;">Already have an account? <a href="#" onclick="showLogin();return false;">Sign in</a></span>
-</div>
-</div>
-</div>
-<script>
-// EmailJS 配置（请替换为你的实际 ID）
-const EMAILJS_SERVICE_ID = 'service_ghvr7ui';
-const EMAILJS_TEMPLATE_ID = 'template_x4lt4dk';
-emailjs.init('gtluK1AW_Y5bE9mVp');
-
-// Firebase 配置
-const firebaseConfig = {
-  apiKey: "AIzaSyBtF_37PsX1ItQobFZkOVSMUEio2NPmdoM",
-  authDomain: "login-system-ae45f.firebaseapp.com",
-  projectId: "login-system-ae45f",
-  storageBucket: "login-system-ae45f.firebasestorage.app",
-  messagingSenderId: "178893070717",
-  appId: "1:178893070717:web:e2bc8f79ce87f85391ec14",
-  measurementId: "G-Y4H7X7DJ88"
-};
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-
-// UI 辅助
-function resetRegisterForm() {
-  const form = document.getElementById('register-form');
-  if (form) form.reset();
-  document.getElementById('register-step1').style.display = '';
-  document.getElementById('register-step2').style.display = 'none';
-  document.getElementById('register-step3').style.display = 'none';
-  document.getElementById('register-msg-step1').innerText = '';
-  document.getElementById('register-msg-step2').innerText = '';
-  document.getElementById('register-msg-step3').innerText = '';
-}
-function showLogin() {
-  document.getElementById('login-form').style.display = '';
-  document.getElementById('register-form').style.display = 'none';
-  document.getElementById('modal-title').innerText = 'Sign In';
-  document.getElementById('switch-to-register').style.display = '';
-  document.getElementById('switch-to-login').style.display = 'none';
-  document.getElementById('login-msg').innerText = '';
-}
-function showRegister() {
-  document.getElementById('login-form').style.display = 'none';
-  document.getElementById('register-form').style.display = '';
-  document.getElementById('modal-title').innerText = 'Sign Up';
-  document.getElementById('switch-to-register').style.display = 'none';
-  document.getElementById('switch-to-login').style.display = '';
-  resetRegisterForm();
-}
-function showLoginModal() {
-  document.getElementById('login-modal-bg').style.display = '';
-}
-function hideLoginModal() {
-  document.getElementById('login-modal-bg').style.display = 'none';
-}
-function showMain() {
-  hideLoginModal();
-  document.getElementById('main-content').style.display = '';
-  try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch(_){}
-}
-function hideMain() {
-  document.getElementById('main-content').style.display = 'none';
-}
-
-// 注册流程返回按钮逻辑
-document.addEventListener('DOMContentLoaded', function() {
-  const back1 = document.getElementById('back-to-step1');
-  if (back1) back1.onclick = function() {
-    document.getElementById('register-step2').style.display = 'none';
-    document.getElementById('register-step1').style.display = '';
-  };
-  const back2 = document.getElementById('back-to-step2');
-  if (back2) back2.onclick = function() {
-    document.getElementById('register-step3').style.display = 'none';
-    document.getElementById('register-step2').style.display = '';
-  };
-
-  // 初始显示登录弹窗（未登录时）
-  hideMain();
-  showLogin();
-  showLoginModal();
-  resetRegisterForm();
-});
-
-// Step 1: 发送验证码
-document.getElementById('send-code-btn').onclick = async function() {
-  const email = document.getElementById('register-email').value.trim();
-  if (!email) {
-    document.getElementById('register-msg-step1').innerText = 'Please enter your email.';
-    return;
-  }
-  window._registerCode = Math.floor(100000 + Math.random() * 900000).toString();
-  window._registerEmail = email;
-  try {
-    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, { email, code: window._registerCode });
-    document.getElementById('register-msg-step1').innerText = 'Verification code sent to your email.';
-    document.getElementById('register-step1').style.display = 'none';
-    document.getElementById('register-step2').style.display = '';
-  } catch (err) {
-    document.getElementById('register-msg-step1').innerText = 'Failed to send email: ' + (err.text || err.message || err);
-  }
-};
-
-// Step 2: 校验验证码
-document.getElementById('verify-code-btn').onclick = function() {
-  const code = document.getElementById('register-code').value.trim();
-  if (code === window._registerCode) {
-    document.getElementById('register-msg-step2').innerText = '';
-    document.getElementById('register-step2').style.display = 'none';
-    document.getElementById('register-step3').style.display = '';
-  } else {
-    document.getElementById('register-msg-step2').innerText = 'Incorrect code.';
-  }
-};
-
-// Step 3: 完成注册
-document.getElementById('register-form').onsubmit = async function(e) {
-  e.preventDefault();
-  const password = document.getElementById('register-password').value;
-  const password2 = document.getElementById('register-password2').value;
-  const name = document.getElementById('register-name').value;
-  const other = document.getElementById('register-other').value;
-  if (password !== password2) {
-    document.getElementById('register-msg-step3').innerText = 'Passwords do not match.';
-    return;
-  }
-  try {
-    await auth.createUserWithEmailAndPassword(window._registerEmail, password);
-    document.getElementById('register-msg-step3').innerText = '';
-    // onAuthStateChanged 会自动触发 showMain()
-  } catch (err) {
-    document.getElementById('register-msg-step3').innerText = err.message || String(err);
-  }
-};
-
-// 登录表单提交
-document.getElementById('login-form').addEventListener('submit', async function(e) {
-  e.preventDefault();
-  const email = document.getElementById('login-email').value.trim();
-  const password = document.getElementById('login-password').value;
-  const btn = document.getElementById('login-submit');
-  document.getElementById('login-msg').innerText = '';
-  try {
-    btn.disabled = true;
-    await auth.signInWithEmailAndPassword(email, password);
-    // onAuthStateChanged 会自动触发 showMain()
-  } catch (err) {
-    document.getElementById('login-msg').innerText = err.message || String(err);
-  } finally {
-    btn.disabled = false;
-  }
-});
-
-// 登录状态变化
-auth.onAuthStateChanged(function(user) {
-  if (user) {
-    showMain();
-  } else {
-    hideMain();
-    showLogin();
-    showLoginModal();
-    resetRegisterForm();
-  }
-});
-
-// 产图功能
-function aspectToSize(ar) {
-  const map = { "1:1": [768,768], "3:4": [768,1024], "4:3": [1024,768], "9:16": [768,1365], "16:9": [1365,768] };
-  return map[ar] || [768,1024];
-}
-function pollinationsUrls(prompt, count, width, height, seed) {
-  const quoted = encodeURIComponent(prompt);
-  const base = `https://image.pollinations.ai/prompt/${quoted}?width=${width}&height=${height}&n=1`;
-  const startSeed = Number.isInteger(seed) ? seed : Date.now();
-  return Array.from({length: count}, (_, i) =&gt; `${base}&amp;seed=${startSeed + i}`);
-}
-async function hordeSubmit(prompt, width, height, seed, apiKey, proxyBase) {
-  const payload = {
-    prompt,
-    params: {
-      sampler_name: "k_euler",
-      cfg_scale: 7,
-      seed: Number.isInteger(seed) ? seed : null,
-      steps: 28,
-      width: Math.round(width / 64) * 64,
-      height: Math.round(height / 64) * 64
-    },
-    nsfw: false,
-    censor_nsfw: true,
-    trusted_workers: false,
-    slow_workers: true
-  };
-  const base = proxyBase || "https://stablehorde.net/api/v2";
-  const r = await fetch(base + "/generate/async", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "accept": "application/json",
-      "apikey": apiKey || "0000000000"
-    },
-    body: JSON.stringify(payload),
-    mode: "cors"
-  });
-  if (!r.ok) throw new Error("Horde submit failed: " + r.status);
-  const j = await r.json();
-  if (!j.id) throw new Error("No job id from Horde");
-  return j.id;
-}
-async function hordePoll(id, apiKey, proxyBase, timeoutMs = 240000, pollMs = 4000) {
-  const start = Date.now();
-  const base = proxyBase || "https://stablehorde.net/api/v2";
-  while (Date.now() - start &lt; timeoutMs) {
-    const r = await fetch(`${base}/generate/status/${id}`, {
-      headers: { "accept": "application/json", "apikey": apiKey || "0000000000" },
-      mode: "cors",
-    });
-    if (!r.ok) throw new Error("Horde status failed: " + r.status);
-    const j = await r.json();
-    if (j.done &amp;&amp; j.generations &amp;&amp; j.generations.length) return j;
-    await new Promise(res =&gt; setTimeout(res, pollMs));
-  }
-  throw new Error("Horde timed out");
-}
-function render(items) {
-  const container = document.getElementById("results");
-  container.innerHTML = "";
-  items.forEach((it, idx) =&gt; {
-    const card = document.createElement("div");
-    card.className = "card";
-    const src = it.url || (it.b64 ? ("data:image/png;base64," + it.b64) : "");
-    card.innerHTML = `
-      &lt;div class="badge"&gt;${it.provider || "unknown"}&lt;/div&gt;
-      ${src ? `&lt;img src="<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi>s</mi><mi>r</mi><mi>c</mi></mrow><mi mathvariant="normal">&quot;</mi><mi>a</mi><mi>l</mi><mi>t</mi><mo>=</mo><mi mathvariant="normal">&quot;</mi><mi>i</mi><mi>m</mi><mi>g</mi><mo>−</mo></mrow><annotation encoding="application/x-tex">{src}&quot; alt=&quot;img-</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord"><span class="mord mathnormal">src</span></span><span class="mord">&quot;</span><span class="mord mathnormal">a</span><span class="mord mathnormal">lt</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord">&quot;</span><span class="mord mathnormal">im</span><span class="mord mathnormal" style="margin-right:0.03588em;">g</span><span class="mord">−</span></span></span></span>{idx}"/&gt;` : "&lt;div&gt;No image&lt;/div&gt;"}
-    `;
-    container.appendChild(card);
-  });
-}
-async function generate() {
-  const prompt = document.getElementById("prompt").value.trim();
-  const count = parseInt(document.getElementById("count").value || "1", 10);
-  const aspect = document.getElementById("aspect").value;
-  const seedRaw = document.getElementById("seed").value.trim();
-  const seed = seedRaw ? parseInt(seedRaw, 10) : null;
-  const provider = document.getElementById("provider").value;
-  const hordeKey = document.getElementById("hordeKey").value.trim() || null;
-  const proxy = document.getElementById("hordeProxy").value.trim() || null;
-  if (!prompt) {
-    document.getElementById("status").textContent = "Please enter a prompt.";
-    return;
-  }
-  const [w, h] = aspectToSize(aspect);
-  document.getElementById("status").textContent = "Working...";
-  document.getElementById("go").disabled = true;
-  try {
-    let items = [];
-    if (provider === "pollinations") {
-      items = pollinationsUrls(prompt, count, w, h, seed).map(u =&gt; ({ provider: "pollinations", url: u }));
-    } else if (provider === "stable_horde") {
-      for (let i = 0; i &lt; count; i++) {
-        const id = await hordeSubmit(prompt, w, h, Number.isInteger(seed) ? seed + i : null, hordeKey, proxy);
-        const status = await hordePoll(id, hordeKey, proxy);
-        const gen = status.generations.find(g =&gt; g.img);
-        if (gen &amp;&amp; gen.img) items.push({ provider: "stable_horde", b64: gen.img });
+  <meta charset="UTF-8">
+  <title>AI Design Generator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      margin: 0; 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      overflow: hidden;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+    
+    .header h1 {
+      margin: 0;
+      font-size: 2.5em;
+      font-weight: 300;
+    }
+    
+    .header p {
+      margin: 10px 0 0 0;
+      opacity: 0.9;
+      font-size: 1.1em;
+    }
+    
+    .controls {
+      padding: 30px;
+    }
+    
+    .row { 
+      display: flex; 
+      gap: 15px; 
+      flex-wrap: wrap; 
+      margin-bottom: 20px; 
+      align-items: end;
+    }
+    
+    .row > * {
+      flex: 1;
+      min-width: 200px;
+    }
+    
+    textarea, input, select, button { 
+      padding: 12px; 
+      font-size: 14px; 
+      border: 2px solid #e1e5e9;
+      border-radius: 8px;
+      transition: border-color 0.3s;
+    }
+    
+    textarea:focus, input:focus, select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    textarea { 
+      width: 100%; 
+      height: 120px; 
+      resize: vertical;
+      font-family: inherit;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+      color: #333;
+    }
+    
+    button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: 500;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+    
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    #go {
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      padding: 15px 30px;
+      font-size: 16px;
+      min-width: 150px;
+    }
+    
+    .grid { 
+      display: grid; 
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
+      gap: 20px; 
+      padding: 0 30px 30px 30px;
+    }
+    
+    .card { 
+      border: 2px solid #e1e5e9; 
+      border-radius: 12px; 
+      padding: 15px; 
+      background: white;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    
+    .card img { 
+      width: 100%; 
+      height: auto; 
+      display: block; 
+      border-radius: 8px; 
+      margin-bottom: 10px;
+    }
+    
+    .badge { 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+      color: white;
+      padding: 5px 12px; 
+      border-radius: 20px; 
+      font-size: 12px; 
+      font-weight: 500;
+      display: inline-block;
+      margin-bottom: 10px;
+    }
+    
+    #status { 
+      margin: 15px 0; 
+      padding: 10px;
+      border-radius: 8px;
+      font-weight: 500;
+    }
+    
+    .status-working {
+      background: #e3f2fd;
+      color: #1976d2;
+      border: 1px solid #bbdefb;
+    }
+    
+    .status-success {
+      background: #e8f5e8;
+      color: #2e7d32;
+      border: 1px solid #c8e6c9;
+    }
+    
+    .status-error {
+      background: #ffebee;
+      color: #c62828;
+      border: 1px solid #ffcdd2;
+    }
+    
+    .example-prompts {
+      margin-top: 10px;
+    }
+    
+    .example-prompts h3 {
+      margin: 0 0 10px 0;
+      color: #333;
+      font-size: 14px;
+    }
+    
+    .prompt-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    
+    .prompt-tag {
+      background: #f5f5f5;
+      border: 1px solid #ddd;
+      padding: 5px 10px;
+      border-radius: 15px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    .prompt-tag:hover {
+      background: #667eea;
+      color: white;
+    }
+    
+    @media (max-width: 768px) {
+      .row {
+        flex-direction: column;
       }
-    } else if (provider === "one_each") {
-      try {
-        const id = await hordeSubmit(prompt, w, h, seed, hordeKey, proxy);
-        const status = await hordePoll(id, hordeKey, proxy);
-        const gen = status.generations.find(g =&gt; g.img);
-        if (gen &amp;&amp; gen.img) items.push({ provider: "stable_horde", b64: gen.img });
-      } catch (e) {
-        console.warn("Horde failed:", e);
+      
+      .row > * {
+        min-width: unset;
       }
-      items.push({ provider: "pollinations", url: pollinationsUrls(prompt, 1, w, h, seed)[0] });
-      while (items.length &lt; count) {
-        const s = Number.isInteger(seed) ? seed + items.length : null;
-        items.push({ provider: "pollinations", url: pollinationsUrls(prompt, 1, w, h, s)[0] });
+      
+      .header h1 {
+        font-size: 2em;
       }
-    } else {
-      // Auto
-      try {
-        for (let i = 0; i &lt; count; i++) {
-          const id = await hordeSubmit(prompt, w, h, Number.isInteger(seed) ? seed + i : null, hordeKey, proxy);
-          const status = await hordePoll(id, hordeKey, proxy);
-          const gen = status.generations.find(g =&gt; g.img);
-          if (gen &amp;&amp; gen.img) items.push({ provider: "stable_horde", b64: gen.img });
-        }
-      } catch (e) {
-        console.warn("Horde failed, using Pollinations:", e);
+      
+      .controls {
+        padding: 20px;
       }
-      if (items.length &lt; count) {
-        const needed = count - items.length;
-        const start = Number.isInteger(seed) ? seed + items.length : null;
-        const urls = pollinationsUrls(prompt, needed, w, h, start);
-        items.push(...urls.map(u =&gt; ({ provider: "pollinations", url: u })));
+      
+      .grid {
+        grid-template-columns: 1fr;
+        padding: 0 20px 20px 20px;
       }
     }
-    render(items);
-    document.getElementById("status").textContent = `Done. Returned ${items.length} image(s).`;
-  } catch (e) {
-    console.error(e);
-    document.getElementById("status").textContent = "Error: " + (e.message || e);
-  } finally {
-    document.getElementById("go").disabled = false;
-  }
-}
-document.getElementById("go").onclick = generate;
-</script>
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎨 AI Design Generator</h1>
+      <p>Create stunning images with AI - No login required!</p>
+    </div>
+    
+    <div class="controls">
+      <div class="row">
+        <div style="flex: 2;">
+          <label for="prompt">Describe your design</label>
+          <textarea id="prompt" placeholder="e.g., 'Minimalist product hero shot, studio lighting, soft shadows, high detail'"></textarea>
+          <div class="example-prompts">
+            <h3>💡 Quick Examples:</h3>
+            <div class="prompt-tags">
+              <span class="prompt-tag" onclick="setPrompt('Futuristic city skyline at sunset, cyberpunk style, neon lights')">Cyberpunk City</span>
+              <span class="prompt-tag" onclick="setPrompt('Minimalist product photography, white background, soft lighting')">Product Shot</span>
+              <span class="prompt-tag" onclick="setPrompt('Fantasy landscape with mountains, magical forest, ethereal lighting')">Fantasy Scene</span>
+              <span class="prompt-tag" onclick="setPrompt('Abstract geometric art, vibrant colors, modern design')">Abstract Art</span>
+              <span class="prompt-tag" onclick="setPrompt('Portrait of a person, professional headshot, studio lighting')">Portrait</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div>
+          <label for="provider">AI Provider</label>
+          <select id="provider">
+            <option value="auto" selected>🚀 Auto (Best Quality)</option>
+            <option value="pollinations">🌸 Pollinations (Fast)</option>
+            <option value="stable_horde">🎯 Stable Horde (High Quality)</option>
+            <option value="one_each">🔄 One from Each</option>
+          </select>
+        </div>
+        <div>
+          <label for="count">Image Count</label>
+          <input id="count" type="number" min="1" max="8" value="3"/>
+        </div>
+        <div>
+          <label for="aspect">Aspect Ratio</label>
+          <select id="aspect">
+            <option>1:1</option>
+            <option selected>3:4</option>
+            <option>4:3</option>
+            <option>9:16</option>
+            <option>16:9</option>
+          </select>
+        </div>
+        <div>
+          <label for="seed">Seed (Optional)</label>
+          <input id="seed" type="number" placeholder="e.g. 12345"/>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div>
+          <label for="hordeKey">Horde API Key (Optional)</label>
+          <input id="hordeKey" type="text" placeholder="Leave empty for anonymous"/>
+        </div>
+        <div>
+          <label for="hordeProxy">Horde Proxy URL (Optional)</label>
+          <input id="hordeProxy" type="text" placeholder="https://your-worker.workers.dev"/>
+        </div>
+        <div style="display: flex; align-items: end;">
+          <button id="go">✨ Generate Images</button>
+        </div>
+      </div>
+      
+      <div id="status"></div>
+    </div>
+    
+    <div id="results" class="grid"></div>
+  </div>
+
+  <script>
+    // Set example prompt
+    function setPrompt(text) {
+      document.getElementById('prompt').value = text;
+    }
+
+    // AI Generation Functions
+    function aspectToSize(ar) {
+      const map = { 
+        "1:1": [768,768], 
+        "3:4": [768,1024], 
+        "4:3": [1024,768], 
+        "9:16": [768,1365], 
+        "16:9": [1365,768] 
+      };
+      return map[ar] || [768,1024];
+    }
+
+    function pollinationsUrls(prompt, count, width, height, seed) {
+      const quoted = encodeURIComponent(prompt);
+      const base = `https://image.pollinations.ai/prompt/${quoted}?width=${width}&height=${height}&n=1`;
+      const startSeed = Number.isInteger(seed) ? seed : Date.now();
+      return Array.from({length: count}, (_, i) => `${base}&seed=${startSeed + i}`);
+    }
+
+    async function hordeSubmit(prompt, width, height, seed, apiKey, proxyBase) {
+      const payload = {
+        prompt,
+        params: {
+          sampler_name: "k_euler",
+          cfg_scale: 7,
+          seed: Number.isInteger(seed) ? seed : null,
+          steps: 28,
+          width: Math.round(width / 64) * 64,
+          height: Math.round(height / 64) * 64
+        },
+        nsfw: false,
+        censor_nsfw: true,
+        trusted_workers: false,
+        slow_workers: true
+      };
+      const base = proxyBase || "https://stablehorde.net/api/v2";
+      const r = await fetch(base + "/generate/async", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "accept": "application/json",
+          "apikey": apiKey || "0000000000"
+        },
+        body: JSON.stringify(payload),
+        mode: "cors"
+      });
+      if (!r.ok) throw new Error("Horde submit failed: " + r.status);
+      const j = await r.json();
+      if (!j.id) throw new Error("No job id from Horde");
+      return j.id;
+    }
+
+    async function hordePoll(id, apiKey, proxyBase, timeoutMs = 240000, pollMs = 4000) {
+      const start = Date.now();
+      const base = proxyBase || "https://stablehorde.net/api/v2";
+      while (Date.now() - start < timeoutMs) {
+        const r = await fetch(`${base}/generate/status/${id}`, {
+          headers: { "accept": "application/json", "apikey": apiKey || "0000000000" },
+          mode: "cors",
+        });
+        if (!r.ok) throw new Error("Horde status failed: " + r.status);
+        const j = await r.json();
+        if (j.done && j.generations && j.generations.length) return j;
+        await new Promise(res => setTimeout(res, pollMs));
+      }
+      throw new Error("Horde timed out");
+    }
+
+    function updateStatus(message, type = '') {
+      const statusEl = document.getElementById("status");
+      statusEl.textContent = message;
+      statusEl.className = type ? `status-${type}` : '';
+    }
+
+    function render(items) {
+      const container = document.getElementById("results");
+      container.innerHTML = "";
+      
+      if (items.length === 0) {
+        container.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;">No images generated</div>';
+        return;
+      }
+      
+      items.forEach((it, idx) => {
+        const card = document.createElement("div");
+        card.className = "card";
+        const src = it.url || (it.b64 ? ("data:image/png;base64," + it.b64) : "");
+        card.innerHTML = `
+          <div class="badge">${it.provider || "unknown"}</div>
+          ${src ? `<img src="${src}" alt="Generated image ${idx + 1}" loading="lazy"/>` : "<div>❌ Failed to generate</div>"}
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    async function generate() {
+      const prompt = document.getElementById("prompt").value.trim();
+      const count = parseInt(document.getElementById("count").value || "1", 10);
+      const aspect = document.getElementById("aspect").value;
+      const seedRaw = document.getElementById("seed").value.trim();
+      const seed = seedRaw ? parseInt(seedRaw, 10) : null;
+      const provider = document.getElementById("provider").value;
+      const hordeKey = document.getElementById("hordeKey").value.trim() || null;
+      const proxy = document.getElementById("hordeProxy").value.trim() || null;
+      
+      if (!prompt) {
+        updateStatus("⚠️ Please enter a prompt to generate images.", "error");
+        return;
+      }
+      
+      const [w, h] = aspectToSize(aspect);
+      updateStatus("🎨 Generating your images... This may take a moment.", "working");
+      document.getElementById("go").disabled = true;
+      
+      try {
+        let items = [];
+        
+        if (provider === "pollinations") {
+          items = pollinationsUrls(prompt, count, w, h, seed).map(u => ({ provider: "pollinations", url: u }));
+        } else if (provider === "stable_horde") {
+          for (let i = 0; i < count; i++) {
+            try {
+              const id = await hordeSubmit(prompt, w, h, Number.isInteger(seed) ? seed + i : null, hordeKey, proxy);
+              const status = await hordePoll(id, hordeKey, proxy);
+              const gen = status.generations.find(g => g.img);
+              if (gen && gen.img) items.push({ provider: "stable_horde", b64: gen.img });
+            } catch (e) {
+              console.warn(`Horde generation ${i + 1} failed:`, e);
+            }
+          }
+        } else if (provider === "one_each") {
+          // Try Horde first
+          try {
+            const id = await hordeSubmit(prompt, w, h, seed, hordeKey, proxy);
+            const status = await hordePoll(id, hordeKey, proxy);
+            const gen = status.generations.find(g => g.img);
+            if (gen && gen.img) items.push({ provider: "stable_horde", b64: gen.img });
+          } catch (e) {
+            console.warn("Horde failed:", e);
+          }
+          
+          // Add Pollinations
+          items.push({ provider: "pollinations", url: pollinationsUrls(prompt, 1, w, h, seed)[0] });
+          
+          // Fill remaining with Pollinations
+          while (items.length < count) {
+            const s = Number.isInteger(seed) ? seed + items.length : null;
+            items.push({ provider: "pollinations", url: pollinationsUrls(prompt, 1, w, h, s)[0] });
+          }
+        } else {
+          // Auto: try Horde then fallback to Pollinations
+          try {
+            for (let i = 0; i < count; i++) {
+              try {
+                const id = await hordeSubmit(prompt, w, h, Number.isInteger(seed) ? seed + i : null, hordeKey, proxy);
+                const status = await hordePoll(id, hordeKey, proxy);
+                const gen = status.generations.find(g => g.img);
+                if (gen && gen.img) items.push({ provider: "stable_horde", b64: gen.img });
+              } catch (e) {
+                console.warn(`Horde generation ${i + 1} failed, will use Pollinations:`, e);
+                break;
+              }
+            }
+          } catch (e) {
+            console.warn("Horde failed, using Pollinations:", e);
+          }
+          
+          // Fill remaining with Pollinations
+          if (items.length < count) {
+            const needed = count - items.length;
+            const start = Number.isInteger(seed) ? seed + items.length : null;
+            const urls = pollinationsUrls(prompt, needed, w, h, start);
+            items.push(...urls.map(u => ({ provider: "pollinations", url: u })));
+          }
+        }
+        
+        render(items);
+        updateStatus(`✅ Generated ${items.length} image${items.length !== 1 ? 's' : ''} successfully!`, "success");
+      } catch (e) {
+        console.error(e);
+        updateStatus(`❌ Error: ${e.message || e}`, "error");
+      } finally {
+        document.getElementById("go").disabled = false;
+      }
+    }
+
+    // Set up event listeners
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById("go").addEventListener('click', generate);
+      
+      // Allow Enter key in textarea to generate
+      document.getElementById("prompt").addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+          e.preventDefault();
+          generate();
+        }
+      });
+    });
+  </script>
 </body>
 </html>
