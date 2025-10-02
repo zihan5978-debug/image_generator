@@ -4,53 +4,236 @@
   <meta charset="UTF-8">
   <title>AI Design Generator</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
   <style>
-    body { 
-      font-family: Arial, sans-serif; 
-      margin: 0; 
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-      padding: 20px;
+    * {
+      margin: 0;
+      padding: 0;
       box-sizing: border-box;
     }
     
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      background: white;
-      border-radius: 15px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-      overflow: hidden;
+    body { 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     
-    .header {
+    /* Authentication Styles */
+    .auth-container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      overflow: hidden;
+      width: 100%;
+      max-width: 450px;
+      margin: 20px;
+    }
+    
+    .auth-header {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
-      padding: 30px;
+      padding: 40px 30px;
       text-align: center;
     }
     
-    .header h1 {
-      margin: 0;
-      font-size: 2.5em;
+    .auth-header h1 {
+      font-size: 2.2em;
+      margin-bottom: 10px;
       font-weight: 300;
     }
     
-    .header p {
-      margin: 10px 0 0 0;
+    .auth-header p {
       opacity: 0.9;
       font-size: 1.1em;
     }
     
+    .auth-content {
+      padding: 40px 30px;
+    }
+    
+    .form-group {
+      margin-bottom: 25px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #333;
+    }
+    
+    .form-group input {
+      width: 100%;
+      padding: 15px;
+      border: 2px solid #e1e5e9;
+      border-radius: 10px;
+      font-size: 16px;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    
+    .form-group input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .btn {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+    }
+    
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .btn-secondary {
+      background: #6c757d;
+      margin-top: 10px;
+    }
+    
+    .btn-code {
+      width: auto;
+      padding: 10px 20px;
+      margin-left: 10px;
+      font-size: 14px;
+    }
+    
+    .message {
+      padding: 12px;
+      border-radius: 8px;
+      margin: 15px 0;
+      text-align: center;
+      font-weight: 500;
+    }
+    
+    .message.error {
+      background: #ffebee;
+      color: #c62828;
+      border: 1px solid #ffcdd2;
+    }
+    
+    .message.success {
+      background: #e8f5e8;
+      color: #2e7d32;
+      border: 1px solid #c8e6c9;
+    }
+    
+    .message.info {
+      background: #e3f2fd;
+      color: #1976d2;
+      border: 1px solid #bbdefb;
+    }
+    
+    .switch-link {
+      text-align: center;
+      margin-top: 25px;
+      padding-top: 25px;
+      border-top: 1px solid #e1e5e9;
+    }
+    
+    .switch-link a {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    
+    .switch-link a:hover {
+      text-decoration: underline;
+    }
+    
+    .code-input-group {
+      display: flex;
+      align-items: center;
+    }
+    
+    .code-input-group input {
+      flex: 1;
+    }
+    
+    .hidden {
+      display: none !important;
+    }
+    
+    /* Main App Styles */
+    .main-app {
+      display: none;
+      min-height: 100vh;
+      width: 100%;
+      background: #f8f9fa;
+    }
+    
+    .main-app.show {
+      display: block;
+    }
+    
+    .app-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .app-header h1 {
+      font-size: 1.8em;
+      font-weight: 300;
+    }
+    
+    .logout-btn {
+      padding: 10px 20px;
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    .logout-btn:hover {
+      background: rgba(255,255,255,0.3);
+    }
+    
+    .app-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 30px 20px;
+    }
+    
     .controls {
+      background: white;
+      border-radius: 15px;
       padding: 30px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
     }
     
     .row { 
       display: flex; 
-      gap: 15px; 
+      gap: 20px; 
       flex-wrap: wrap; 
-      margin-bottom: 20px; 
+      margin-bottom: 25px; 
       align-items: end;
     }
     
@@ -59,7 +242,7 @@
       min-width: 200px;
     }
     
-    textarea, input, select, button { 
+    .controls textarea, .controls input, .controls select, .controls button { 
       padding: 12px; 
       font-size: 14px; 
       border: 2px solid #e1e5e9;
@@ -67,70 +250,65 @@
       transition: border-color 0.3s;
     }
     
-    textarea:focus, input:focus, select:focus {
+    .controls textarea:focus, .controls input:focus, .controls select:focus {
       outline: none;
       border-color: #667eea;
     }
     
-    textarea { 
+    .controls textarea { 
       width: 100%; 
       height: 120px; 
       resize: vertical;
       font-family: inherit;
     }
     
-    label {
+    .controls label {
       display: block;
-      margin-bottom: 5px;
+      margin-bottom: 8px;
       font-weight: 500;
       color: #333;
     }
     
-    button {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    .generate-btn {
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
       color: white;
       border: none;
-      cursor: pointer;
+      padding: 15px 30px;
+      font-size: 16px;
       font-weight: 500;
+      border-radius: 8px;
+      cursor: pointer;
       transition: transform 0.2s, box-shadow 0.2s;
     }
     
-    button:hover {
+    .generate-btn:hover {
       transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+      box-shadow: 0 5px 15px rgba(17, 153, 142, 0.4);
     }
     
-    button:disabled {
+    .generate-btn:disabled {
       opacity: 0.6;
       cursor: not-allowed;
       transform: none;
-    }
-    
-    #go {
-      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-      padding: 15px 30px;
-      font-size: 16px;
-      min-width: 150px;
     }
     
     .grid { 
       display: grid; 
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
       gap: 20px; 
-      padding: 0 30px 30px 30px;
     }
     
     .card { 
-      border: 2px solid #e1e5e9; 
+      background: white;
       border-radius: 12px; 
       padding: 15px; 
-      background: white;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
       transition: transform 0.2s, box-shadow 0.2s;
     }
     
     .card:hover {
       transform: translateY(-5px);
-      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
     }
     
     .card img { 
@@ -154,7 +332,7 @@
     
     #status { 
       margin: 15px 0; 
-      padding: 10px;
+      padding: 12px;
       border-radius: 8px;
       font-weight: 500;
     }
@@ -177,37 +355,6 @@
       border: 1px solid #ffcdd2;
     }
     
-    .example-prompts {
-      margin-top: 10px;
-    }
-    
-    .example-prompts h3 {
-      margin: 0 0 10px 0;
-      color: #333;
-      font-size: 14px;
-    }
-    
-    .prompt-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-    
-    .prompt-tag {
-      background: #f5f5f5;
-      border: 1px solid #ddd;
-      padding: 5px 10px;
-      border-radius: 15px;
-      font-size: 12px;
-      cursor: pointer;
-      transition: background-color 0.2s;
-    }
-    
-    .prompt-tag:hover {
-      background: #667eea;
-      color: white;
-    }
-    
     @media (max-width: 768px) {
       .row {
         flex-direction: column;
@@ -217,8 +364,10 @@
         min-width: unset;
       }
       
-      .header h1 {
-        font-size: 2em;
+      .app-header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
       }
       
       .controls {
@@ -227,93 +376,356 @@
       
       .grid {
         grid-template-columns: 1fr;
-        padding: 0 20px 20px 20px;
       }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
+  <!-- Authentication Container -->
+  <div id="auth-container" class="auth-container">
+    <div class="auth-header">
       <h1>🎨 AI Design Generator</h1>
-      <p>Create stunning images with AI - No login required!</p>
+      <p>Create stunning images with AI</p>
     </div>
     
-    <div class="controls">
-      <div class="row">
-        <div style="flex: 2;">
-          <label for="prompt">Describe your design</label>
-          <textarea id="prompt" placeholder="e.g., 'Minimalist product hero shot, studio lighting, soft shadows, high detail'"></textarea>
-          <div class="example-prompts">
-            <h3>💡 Quick Examples:</h3>
-            <div class="prompt-tags">
-              <span class="prompt-tag" onclick="setPrompt('Futuristic city skyline at sunset, cyberpunk style, neon lights')">Cyberpunk City</span>
-              <span class="prompt-tag" onclick="setPrompt('Minimalist product photography, white background, soft lighting')">Product Shot</span>
-              <span class="prompt-tag" onclick="setPrompt('Fantasy landscape with mountains, magical forest, ethereal lighting')">Fantasy Scene</span>
-              <span class="prompt-tag" onclick="setPrompt('Abstract geometric art, vibrant colors, modern design')">Abstract Art</span>
-              <span class="prompt-tag" onclick="setPrompt('Portrait of a person, professional headshot, studio lighting')">Portrait</span>
+    <div class="auth-content">
+      <!-- Login Form -->
+      <form id="login-form">
+        <div class="form-group">
+          <label for="login-email">Email Address</label>
+          <input id="login-email" type="email" required autocomplete="username" placeholder="Enter your email">
+        </div>
+        <div class="form-group">
+          <label for="login-password">Password</label>
+          <input id="login-password" type="password" required autocomplete="current-password" placeholder="Enter your password">
+        </div>
+        <button type="submit" class="btn">Sign In</button>
+        <div id="login-msg" class="message" style="display: none;"></div>
+      </form>
+      
+      <!-- Registration Form -->
+      <form id="register-form" class="hidden">
+        <!-- Step 1: Email -->
+        <div id="register-step1">
+          <div class="form-group">
+            <label for="register-email">Email Address</label>
+            <div class="code-input-group">
+              <input id="register-email" type="email" required autocomplete="username" placeholder="Enter your email">
+              <button type="button" id="send-code-btn" class="btn btn-code">Send Code</button>
             </div>
           </div>
+          <div id="register-msg-step1" class="message" style="display: none;"></div>
         </div>
-      </div>
+        
+        <!-- Step 2: Verification -->
+        <div id="register-step2" class="hidden">
+          <div class="form-group">
+            <label for="register-code">Verification Code</label>
+            <input id="register-code" type="text" required placeholder="Enter 6-digit code">
+          </div>
+          <button type="button" id="verify-code-btn" class="btn">Verify Code</button>
+          <button type="button" id="back-to-step1" class="btn btn-secondary">Back</button>
+          <div id="register-msg-step2" class="message" style="display: none;"></div>
+        </div>
+        
+        <!-- Step 3: Complete Registration -->
+        <div id="register-step3" class="hidden">
+          <div class="form-group">
+            <label for="register-password">Password</label>
+            <input id="register-password" type="password" required autocomplete="new-password" placeholder="Create a password">
+          </div>
+          <div class="form-group">
+            <label for="register-password2">Confirm Password</label>
+            <input id="register-password2" type="password" required autocomplete="new-password" placeholder="Confirm your password">
+          </div>
+          <div class="form-group">
+            <label for="register-name">Full Name</label>
+            <input id="register-name" type="text" required placeholder="Enter your full name">
+          </div>
+          <button type="submit" class="btn">Create Account</button>
+          <button type="button" id="back-to-step2" class="btn btn-secondary">Back</button>
+          <div id="register-msg-step3" class="message" style="display: none;"></div>
+        </div>
+      </form>
       
-      <div class="row">
-        <div>
-          <label for="provider">AI Provider</label>
-          <select id="provider">
-            <option value="auto" selected>🚀 Auto (Best Quality)</option>
-            <option value="pollinations">🌸 Pollinations (Fast)</option>
-            <option value="stable_horde">🎯 Stable Horde (High Quality)</option>
-            <option value="one_each">🔄 One from Each</option>
-          </select>
-        </div>
-        <div>
-          <label for="count">Image Count</label>
-          <input id="count" type="number" min="1" max="8" value="3"/>
-        </div>
-        <div>
-          <label for="aspect">Aspect Ratio</label>
-          <select id="aspect">
-            <option>1:1</option>
-            <option selected>3:4</option>
-            <option>4:3</option>
-            <option>9:16</option>
-            <option>16:9</option>
-          </select>
-        </div>
-        <div>
-          <label for="seed">Seed (Optional)</label>
-          <input id="seed" type="number" placeholder="e.g. 12345"/>
-        </div>
+      <div class="switch-link">
+        <span id="switch-to-register">Don't have an account? <a href="#" onclick="showRegister(); return false;">Sign up</a></span>
+        <span id="switch-to-login" class="hidden">Already have an account? <a href="#" onclick="showLogin(); return false;">Sign in</a></span>
       </div>
-      
-      <div class="row">
-        <div>
-          <label for="hordeKey">Horde API Key (Optional)</label>
-          <input id="hordeKey" type="text" placeholder="Leave empty for anonymous"/>
-        </div>
-        <div>
-          <label for="hordeProxy">Horde Proxy URL (Optional)</label>
-          <input id="hordeProxy" type="text" placeholder="https://your-worker.workers.dev"/>
-        </div>
-        <div style="display: flex; align-items: end;">
-          <button id="go">✨ Generate Images</button>
-        </div>
-      </div>
-      
-      <div id="status"></div>
+    </div>
+  </div>
+
+  <!-- Main Application -->
+  <div id="main-app" class="main-app">
+    <div class="app-header">
+      <h1>🎨 AI Design Generator</h1>
+      <button id="logout-btn" class="logout-btn">Logout</button>
     </div>
     
-    <div id="results" class="grid"></div>
+    <div class="app-content">
+      <div class="controls">
+        <div class="row">
+          <div style="flex: 2;">
+            <label for="prompt">Describe your design</label>
+            <textarea id="prompt" placeholder="e.g., 'Minimalist product hero shot, studio lighting, soft shadows, high detail'"></textarea>
+          </div>
+        </div>
+        
+        <div class="row">
+          <div>
+            <label for="provider">AI Provider</label>
+            <select id="provider">
+              <option value="auto" selected>🚀 Auto (Best Quality)</option>
+              <option value="pollinations">🌸 Pollinations (Fast)</option>
+              <option value="stable_horde">🎯 Stable Horde (High Quality)</option>
+              <option value="one_each">🔄 One from Each</option>
+            </select>
+          </div>
+          <div>
+            <label for="count">Image Count</label>
+            <input id="count" type="number" min="1" max="8" value="3"/>
+          </div>
+          <div>
+            <label for="aspect">Aspect Ratio</label>
+            <select id="aspect">
+              <option>1:1</option>
+              <option selected>3:4</option>
+              <option>4:3</option>
+              <option>9:16</option>
+              <option>16:9</option>
+            </select>
+          </div>
+          <div>
+            <label for="seed">Seed (Optional)</label>
+            <input id="seed" type="number" placeholder="e.g. 12345"/>
+          </div>
+        </div>
+        
+        <div class="row">
+          <div>
+            <label for="hordeKey">Horde API Key (Optional)</label>
+            <input id="hordeKey" type="text" placeholder="Leave empty for anonymous"/>
+          </div>
+          <div>
+            <label for="hordeProxy">Horde Proxy URL (Optional)</label>
+            <input id="hordeProxy" type="text" placeholder="https://your-worker.workers.dev"/>
+          </div>
+          <div style="display: flex; align-items: end;">
+            <button id="go" class="generate-btn">✨ Generate Images</button>
+          </div>
+        </div>
+        
+        <div id="status"></div>
+      </div>
+      
+      <div id="results" class="grid"></div>
+    </div>
   </div>
 
   <script>
-    // Set example prompt
-    function setPrompt(text) {
-      document.getElementById('prompt').value = text;
+    // EmailJS Configuration
+    const EMAILJS_SERVICE_ID = 'service_ghvr7ui';
+    const EMAILJS_TEMPLATE_ID = 'template_x4lt4dk';
+    emailjs.init('gtluK1AW_Y5bE9mVp');
+
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBtF_37PsX1ItQobFZkOVSMUEio2NPmdoM",
+      authDomain: "login-system-ae45f.firebaseapp.com",
+      projectId: "login-system-ae45f",
+      storageBucket: "login-system-ae45f.firebasestorage.app",
+      messagingSenderId: "178893070717",
+      appId: "1:178893070717:web:e2bc8f79ce87f85391ec14",
+      measurementId: "G-Y4H7X7DJ88"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    // Global state
+    let currentUser = null;
+
+    // UI Helper Functions
+    function showElement(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('hidden');
     }
 
-    // AI Generation Functions
+    function hideElement(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.add('hidden');
+    }
+
+    function showMessage(id, message, type = 'info') {
+      const el = document.getElementById(id);
+      if (el) {
+        el.textContent = message;
+        el.className = `message ${type}`;
+        el.style.display = 'block';
+      }
+    }
+
+    function hideMessage(id) {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    }
+
+    function showLogin() {
+      showElement('login-form');
+      hideElement('register-form');
+      showElement('switch-to-register');
+      hideElement('switch-to-login');
+      hideMessage('login-msg');
+    }
+
+    function showRegister() {
+      hideElement('login-form');
+      showElement('register-form');
+      hideElement('switch-to-register');
+      showElement('switch-to-login');
+      // Reset registration form
+      showElement('register-step1');
+      hideElement('register-step2');
+      hideElement('register-step3');
+      document.getElementById('register-form').reset();
+      hideMessage('register-msg-step1');
+      hideMessage('register-msg-step2');
+      hideMessage('register-msg-step3');
+    }
+
+    function showMainApp() {
+      document.getElementById('auth-container').style.display = 'none';
+      document.getElementById('main-app').classList.add('show');
+    }
+
+    function showAuth() {
+      document.getElementById('auth-container').style.display = 'block';
+      document.getElementById('main-app').classList.remove('show');
+      showLogin();
+    }
+
+    // Authentication Functions
+    async function handleLogin(email, password) {
+      try {
+        showMessage('login-msg', 'Signing in...', 'info');
+        const result = await auth.signInWithEmailAndPassword(email, password);
+        currentUser = result.user;
+        hideMessage('login-msg');
+        showMainApp();
+      } catch (err) {
+        showMessage('login-msg', err.message, 'error');
+      }
+    }
+
+    function handleLogout() {
+      auth.signOut().then(() => {
+        currentUser = null;
+        showAuth();
+      });
+    }
+
+    // Registration Functions
+    async function sendVerificationCode() {
+      const email = document.getElementById('register-email').value.trim();
+      if (!email) {
+        showMessage('register-msg-step1', 'Please enter your email address.', 'error');
+        return;
+      }
+      
+      window._registerCode = Math.floor(100000 + Math.random() * 900000).toString();
+      window._registerEmail = email;
+      
+      try {
+        showMessage('register-msg-step1', 'Sending verification code...', 'info');
+        await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+          email: email,
+          code: window._registerCode
+        });
+        showMessage('register-msg-step1', 'Verification code sent to your email!', 'success');
+        hideElement('register-step1');
+        showElement('register-step2');
+      } catch (err) {
+        showMessage('register-msg-step1', 'Failed to send email: ' + (err.text || err.message), 'error');
+      }
+    }
+
+    function verifyCode() {
+      const code = document.getElementById('register-code').value.trim();
+      if (code === window._registerCode) {
+        hideMessage('register-msg-step2');
+        hideElement('register-step2');
+        showElement('register-step3');
+      } else {
+        showMessage('register-msg-step2', 'Incorrect verification code.', 'error');
+      }
+    }
+
+    async function completeRegistration() {
+      const password = document.getElementById('register-password').value;
+      const password2 = document.getElementById('register-password2').value;
+      const name = document.getElementById('register-name').value;
+      
+      if (password !== password2) {
+        showMessage('register-msg-step3', 'Passwords do not match.', 'error');
+        return;
+      }
+      
+      if (password.length < 6) {
+        showMessage('register-msg-step3', 'Password must be at least 6 characters.', 'error');
+        return;
+      }
+      
+      try {
+        showMessage('register-msg-step3', 'Creating your account...', 'info');
+        const result = await auth.createUserWithEmailAndPassword(window._registerEmail, password);
+        currentUser = result.user;
+        showMessage('register-msg-step3', 'Account created successfully!', 'success');
+        setTimeout(() => showMainApp(), 1000);
+      } catch (err) {
+        showMessage('register-msg-step3', err.message, 'error');
+      }
+    }
+
+    // Event Listeners
+    document.addEventListener('DOMContentLoaded', function() {
+      // Login form
+      document.getElementById('login-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const email = document.getElementById('login-email').value;
+        const password = document.getElementById('login-password').value;
+        handleLogin(email, password);
+      });
+
+      // Registration events
+      document.getElementById('send-code-btn').addEventListener('click', sendVerificationCode);
+      document.getElementById('verify-code-btn').addEventListener('click', verifyCode);
+      
+      document.getElementById('register-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        completeRegistration();
+      });
+
+      // Navigation buttons
+      document.getElementById('back-to-step1').addEventListener('click', function() {
+        hideElement('register-step2');
+        showElement('register-step1');
+      });
+
+      document.getElementById('back-to-step2').addEventListener('click', function() {
+        hideElement('register-step3');
+        showElement('register-step2');
+      });
+
+      // Logout
+      document.getElementById('logout-btn').addEventListener('click', handleLogout);
+
+      // Generate button
+      document.getElementById('go').addEventListener('click', generate);
+
+      // Initialize
+      showAuth();
+    });
+
+    // AI Generation Functions (same as before)
     function aspectToSize(ar) {
       const map = { 
         "1:1": [768,768], 
@@ -409,6 +821,11 @@
     }
 
     async function generate() {
+      if (!currentUser) {
+        updateStatus("⚠️ Please sign in first.", "error");
+        return;
+      }
+
       const prompt = document.getElementById("prompt").value.trim();
       const count = parseInt(document.getElementById("count").value || "1", 10);
       const aspect = document.getElementById("aspect").value;
@@ -444,7 +861,6 @@
             }
           }
         } else if (provider === "one_each") {
-          // Try Horde first
           try {
             const id = await hordeSubmit(prompt, w, h, seed, hordeKey, proxy);
             const status = await hordePoll(id, hordeKey, proxy);
@@ -454,16 +870,13 @@
             console.warn("Horde failed:", e);
           }
           
-          // Add Pollinations
           items.push({ provider: "pollinations", url: pollinationsUrls(prompt, 1, w, h, seed)[0] });
           
-          // Fill remaining with Pollinations
           while (items.length < count) {
             const s = Number.isInteger(seed) ? seed + items.length : null;
             items.push({ provider: "pollinations", url: pollinationsUrls(prompt, 1, w, h, s)[0] });
           }
         } else {
-          // Auto: try Horde then fallback to Pollinations
           try {
             for (let i = 0; i < count; i++) {
               try {
@@ -480,7 +893,6 @@
             console.warn("Horde failed, using Pollinations:", e);
           }
           
-          // Fill remaining with Pollinations
           if (items.length < count) {
             const needed = count - items.length;
             const start = Number.isInteger(seed) ? seed + items.length : null;
@@ -498,19 +910,6 @@
         document.getElementById("go").disabled = false;
       }
     }
-
-    // Set up event listeners
-    document.addEventListener('DOMContentLoaded', function() {
-      document.getElementById("go").addEventListener('click', generate);
-      
-      // Allow Enter key in textarea to generate
-      document.getElementById("prompt").addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-          e.preventDefault();
-          generate();
-        }
-      });
-    });
   </script>
 </body>
 </html>
