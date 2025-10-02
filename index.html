@@ -1,33 +1,445 @@
-<!-- 登录表单 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AI Design Generator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+<style>
+body { font-family: Arial, sans-serif; margin:0; }
+.modal-bg {
+position: fixed; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.25); z-index:1000; display:flex; align-items:center; justify-content:center;
+}
+.login-modal {
+background:#fff; border-radius:10px; box-shadow:0 4px 24px #0002; padding:32px 28px; min-width:340px; max-width:98vw; width:400px;
+}
+.login-modal h2 { text-align:center; color:#007bff; margin-bottom:18px; }
+.login-modal label { display:block; margin-top:12px; }
+.login-modal input { width:100%; padding:8px; margin-top:4px; border:1px solid #ccc; border-radius:4px; }
+.login-modal button { width:100%; padding:10px; margin-top:18px; background:#007bff; color:#fff; border:none; border-radius:4px; font-size:16px; cursor:pointer; }
+.login-modal button:hover { background:#0056b3; }
+.login-modal .msg { color:#e74c3c; text-align:center; min-height:22px; margin-top:10px; }
+.login-modal .switch-link { text-align:center; margin-top:12px; font-size:15px; }
+.login-modal .switch-link a { color:#007bff; text-decoration:none; }
+.login-modal .switch-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body>
+<div id="main-content">
+<h1>AI Design Generator</h1>
+<div class="controls">
+<div class="row">
+<textarea id="prompt" placeholder="Describe your design (e.g., 'Minimalist product hero shot, studio lighting, soft shadows, high detail')"></textarea>
+</div>
+<div class="row">
+<label>Provider:
+<select id="provider">
+<option value="auto" selected>Auto (Horde -> Pollinations)</option>
+<option value="pollinations">Pollinations only</option>
+<option value="stable_horde">Stable Horde only</option>
+<option value="one_each">One from each</option>
+</select>
+</label>
+<label>Count:
+<input id="count" type="number" min="1" max="8" value="3"/>
+</label>
+<label>Aspect ratio:
+<select id="aspect">
+<option>1:1</option>
+<option selected>3:4</option>
+<option>4:3</option>
+<option>9:16</option>
+<option>16:9</option>
+</select>
+</label>
+<label>Seed (optional):
+<input id="seed" type="number" placeholder="e.g. 12345"/>
+</label>
+</div>
+<div class="row">
+<label>Horde API key (optional):
+<input id="hordeKey" type="text" placeholder="leave empty for anonymous"/>
+</label>
+<label>Horde Proxy URL (optional):
+<input id="hordeProxy" type="text" placeholder="https://your-worker.workers.dev"/>
+</label>
+<button id="go">Generate</button>
+</div>
+<div id="status" class="hint"></div>
+</div>
+<div id="results" class="grid"></div>
+<style>
+.row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+textarea, input, select, button { padding: 8px; font-size: 14px; }
+textarea { width: 100%; height: 140px; }
+.controls { max-width: 900px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.card { border: 1px solid #ddd; border-radius: 8px; padding: 8px; }
+.card img { width: 100%; height: auto; display: block; border-radius: 4px; }
+.hint { color: #666; font-size: 12px; }
+.badge { background:#eee; padding:2px 6px; border-radius: 4px; font-size: 12px; }
+#status { margin: 8px 0; }
+</style>
+</div>
+<div id="login-modal-bg" class="modal-bg" style="display:none;">
+<div class="login-modal">
+<h2 id="modal-title">Sign In</h2>
 <form id="login-form">
-  <input id="login-username" type="text" placeholder="用户名" required>
-  <input id="login-password" type="password" placeholder="密码" required>
-  <button class="primary" type="submit">登录</button>
-  <button type="button" id="send-code">验证码</button>
-  <button type="button" id="show-register">创建账号</button>
-  <div id="login-error" class="error"></div>
+<label for="login-email">Email</label>
+<input id="login-email" type="email" required autocomplete="username" style="width:100%;box-sizing:border-box;">
+<label for="login-password">Password</label>
+<input id="login-password" type="password" required autocomplete="current-password" style="width:100%;box-sizing:border-box;">
+<label for="login-template">Template (optional)</label>
+<input id="login-template" type="text" placeholder="Leave blank for now" style="width:100%;box-sizing:border-box;">
+<button type="submit" id="login-submit">Sign In</button>
+<div class="msg" id="login-msg"></div>
 </form>
-
-<!-- 注册表单 -->
-<form id="register-form" style="display:none">
-  <input id="reg-username" type="text" placeholder="用户名" required>
-  <input id="reg-password" type="password" placeholder="密码" required>
-  <input id="reg-code" type="text" placeholder="行业模板码" required>
-  <button class="primary" type="submit">创建账号</button>
-  <button type="button" id="show-login">返回登录</button>
-  <div id="register-error" class="error"></div>
+<form id="register-form" style="display:none;">
+<div id="register-step1">
+<label for="register-email">Email</label>
+<div style="display:flex;align-items:center;gap:8px;width:100%;">
+<input id="register-email" type="email" required autocomplete="username" style="flex:1;min-width:120px;max-width:100%;box-sizing:border-box;" />
+<button type="button" id="send-code-btn" style="white-space:nowrap;min-width:90px;">Send Code</button>
+</div>
+<div class="msg" id="register-msg-step1"></div>
+</div>
+<div id="register-step2" style="display:none;">
+<label for="register-code">Verification Code</label>
+<input id="register-code" type="text" required style="width:100%;box-sizing:border-box;">
+<div style="display:flex;gap:8px;margin-top:10px;">
+<button type="button" id="verify-code-btn" style="flex:1;">Verify Code</button>
+<button type="button" id="back-to-step1" style="flex:1;background:#ccc;color:#333;">Back</button>
+</div>
+<div class="msg" id="register-msg-step2"></div>
+</div>
+<div id="register-step3" style="display:none;">
+<label for="register-password">Password</label>
+<input id="register-password" type="password" required autocomplete="new-password" style="width:100%;box-sizing:border-box;">
+<label for="register-password2">Repeat Password</label>
+<input id="register-password2" type="password" required autocomplete="new-password" style="width:100%;box-sizing:border-box;">
+<label for="register-name">Name</label>
+<input id="register-name" type="text" required style="width:100%;box-sizing:border-box;">
+<label for="register-other">Other Info</label>
+<input id="register-other" type="text" style="width:100%;box-sizing:border-box;">
+<div style="display:flex;gap:8px;margin-top:10px;">
+<button type="submit" style="flex:1;">Sign Up</button>
+<button type="button" id="back-to-step2" style="flex:1;background:#ccc;color:#333;">Back</button>
+</div>
+<div class="msg" id="register-msg-step3"></div>
+</div>
 </form>
+<div class="switch-link">
+<span id="switch-to-register">Don't have an account? <a href="#" onclick="showRegister();return false;">Sign up</a></span>
+<span id="switch-to-login" style="display:none;">Already have an account? <a href="#" onclick="showLogin();return false;">Sign in</a></span>
+</div>
+</div>
+</div>
+<script>
+// EmailJS 配置（请替换为你的实际 ID）
+const EMAILJS_SERVICE_ID = 'service_ghvr7ui';
+const EMAILJS_TEMPLATE_ID = 'template_x4lt4dk';
+emailjs.init('gtluK1AW_Y5bE9mVp');
 
-<!-- Setup Page（首次登录后填写基本信息） -->
-<form id="setup-form" style="display:none">
-  <h2>完善个人信息</h2>
-  <input id="setup-name" type="text" placeholder="姓名" required>
-  <!-- 可扩展更多信息输入框 -->
-  <button class="primary" type="submit">保存</button>
-  <div id="setup-error" class="error"></div>
-</form>
+// Firebase 配置
+const firebaseConfig = {
+  apiKey: "AIzaSyBtF_37PsX1ItQobFZkOVSMUEio2NPmdoM",
+  authDomain: "login-system-ae45f.firebaseapp.com",
+  projectId: "login-system-ae45f",
+  storageBucket: "login-system-ae45f.firebasestorage.app",
+  messagingSenderId: "178893070717",
+  appId: "1:178893070717:web:e2bc8f79ce87f85391ec14",
+  measurementId: "G-Y4H7X7DJ88"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
 
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="main.js"></script>
+// UI 辅助
+function resetRegisterForm() {
+  const form = document.getElementById('register-form');
+  if (form) form.reset();
+  document.getElementById('register-step1').style.display = '';
+  document.getElementById('register-step2').style.display = 'none';
+  document.getElementById('register-step3').style.display = 'none';
+  document.getElementById('register-msg-step1').innerText = '';
+  document.getElementById('register-msg-step2').innerText = '';
+  document.getElementById('register-msg-step3').innerText = '';
+}
+function showLogin() {
+  document.getElementById('login-form').style.display = '';
+  document.getElementById('register-form').style.display = 'none';
+  document.getElementById('modal-title').innerText = 'Sign In';
+  document.getElementById('switch-to-register').style.display = '';
+  document.getElementById('switch-to-login').style.display = 'none';
+  document.getElementById('login-msg').innerText = '';
+}
+function showRegister() {
+  document.getElementById('login-form').style.display = 'none';
+  document.getElementById('register-form').style.display = '';
+  document.getElementById('modal-title').innerText = 'Sign Up';
+  document.getElementById('switch-to-register').style.display = 'none';
+  document.getElementById('switch-to-login').style.display = '';
+  resetRegisterForm();
+}
+function showLoginModal() {
+  document.getElementById('login-modal-bg').style.display = '';
+}
+function hideLoginModal() {
+  document.getElementById('login-modal-bg').style.display = 'none';
+}
+function showMain() {
+  hideLoginModal();
+  document.getElementById('main-content').style.display = '';
+  try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch(_){}
+}
+function hideMain() {
+  document.getElementById('main-content').style.display = 'none';
+}
+
+// 注册流程返回按钮逻辑
+document.addEventListener('DOMContentLoaded', function() {
+  const back1 = document.getElementById('back-to-step1');
+  if (back1) back1.onclick = function() {
+    document.getElementById('register-step2').style.display = 'none';
+    document.getElementById('register-step1').style.display = '';
+  };
+  const back2 = document.getElementById('back-to-step2');
+  if (back2) back2.onclick = function() {
+    document.getElementById('register-step3').style.display = 'none';
+    document.getElementById('register-step2').style.display = '';
+  };
+
+  // 初始显示登录弹窗（未登录时）
+  hideMain();
+  showLogin();
+  showLoginModal();
+  resetRegisterForm();
+});
+
+// Step 1: 发送验证码
+document.getElementById('send-code-btn').onclick = async function() {
+  const email = document.getElementById('register-email').value.trim();
+  if (!email) {
+    document.getElementById('register-msg-step1').innerText = 'Please enter your email.';
+    return;
+  }
+  window._registerCode = Math.floor(100000 + Math.random() * 900000).toString();
+  window._registerEmail = email;
+  try {
+    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, { email, code: window._registerCode });
+    document.getElementById('register-msg-step1').innerText = 'Verification code sent to your email.';
+    document.getElementById('register-step1').style.display = 'none';
+    document.getElementById('register-step2').style.display = '';
+  } catch (err) {
+    document.getElementById('register-msg-step1').innerText = 'Failed to send email: ' + (err.text || err.message || err);
+  }
+};
+
+// Step 2: 校验验证码
+document.getElementById('verify-code-btn').onclick = function() {
+  const code = document.getElementById('register-code').value.trim();
+  if (code === window._registerCode) {
+    document.getElementById('register-msg-step2').innerText = '';
+    document.getElementById('register-step2').style.display = 'none';
+    document.getElementById('register-step3').style.display = '';
+  } else {
+    document.getElementById('register-msg-step2').innerText = 'Incorrect code.';
+  }
+};
+
+// Step 3: 完成注册
+document.getElementById('register-form').onsubmit = async function(e) {
+  e.preventDefault();
+  const password = document.getElementById('register-password').value;
+  const password2 = document.getElementById('register-password2').value;
+  const name = document.getElementById('register-name').value;
+  const other = document.getElementById('register-other').value;
+  if (password !== password2) {
+    document.getElementById('register-msg-step3').innerText = 'Passwords do not match.';
+    return;
+  }
+  try {
+    await auth.createUserWithEmailAndPassword(window._registerEmail, password);
+    document.getElementById('register-msg-step3').innerText = '';
+    // onAuthStateChanged 会自动触发 showMain()
+  } catch (err) {
+    document.getElementById('register-msg-step3').innerText = err.message || String(err);
+  }
+};
+
+// 登录表单提交
+document.getElementById('login-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const btn = document.getElementById('login-submit');
+  document.getElementById('login-msg').innerText = '';
+  try {
+    btn.disabled = true;
+    await auth.signInWithEmailAndPassword(email, password);
+    // onAuthStateChanged 会自动触发 showMain()
+  } catch (err) {
+    document.getElementById('login-msg').innerText = err.message || String(err);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+// 登录状态变化
+auth.onAuthStateChanged(function(user) {
+  if (user) {
+    showMain();
+  } else {
+    hideMain();
+    showLogin();
+    showLoginModal();
+    resetRegisterForm();
+  }
+});
+
+// 产图功能
+function aspectToSize(ar) {
+  const map = { "1:1": [768,768], "3:4": [768,1024], "4:3": [1024,768], "9:16": [768,1365], "16:9": [1365,768] };
+  return map[ar] || [768,1024];
+}
+function pollinationsUrls(prompt, count, width, height, seed) {
+  const quoted = encodeURIComponent(prompt);
+  const base = `https://image.pollinations.ai/prompt/${quoted}?width=${width}&height=${height}&n=1`;
+  const startSeed = Number.isInteger(seed) ? seed : Date.now();
+  return Array.from({length: count}, (_, i) =&gt; `${base}&amp;seed=${startSeed + i}`);
+}
+async function hordeSubmit(prompt, width, height, seed, apiKey, proxyBase) {
+  const payload = {
+    prompt,
+    params: {
+      sampler_name: "k_euler",
+      cfg_scale: 7,
+      seed: Number.isInteger(seed) ? seed : null,
+      steps: 28,
+      width: Math.round(width / 64) * 64,
+      height: Math.round(height / 64) * 64
+    },
+    nsfw: false,
+    censor_nsfw: true,
+    trusted_workers: false,
+    slow_workers: true
+  };
+  const base = proxyBase || "https://stablehorde.net/api/v2";
+  const r = await fetch(base + "/generate/async", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "accept": "application/json",
+      "apikey": apiKey || "0000000000"
+    },
+    body: JSON.stringify(payload),
+    mode: "cors"
+  });
+  if (!r.ok) throw new Error("Horde submit failed: " + r.status);
+  const j = await r.json();
+  if (!j.id) throw new Error("No job id from Horde");
+  return j.id;
+}
+async function hordePoll(id, apiKey, proxyBase, timeoutMs = 240000, pollMs = 4000) {
+  const start = Date.now();
+  const base = proxyBase || "https://stablehorde.net/api/v2";
+  while (Date.now() - start &lt; timeoutMs) {
+    const r = await fetch(`${base}/generate/status/${id}`, {
+      headers: { "accept": "application/json", "apikey": apiKey || "0000000000" },
+      mode: "cors",
+    });
+    if (!r.ok) throw new Error("Horde status failed: " + r.status);
+    const j = await r.json();
+    if (j.done &amp;&amp; j.generations &amp;&amp; j.generations.length) return j;
+    await new Promise(res =&gt; setTimeout(res, pollMs));
+  }
+  throw new Error("Horde timed out");
+}
+function render(items) {
+  const container = document.getElementById("results");
+  container.innerHTML = "";
+  items.forEach((it, idx) =&gt; {
+    const card = document.createElement("div");
+    card.className = "card";
+    const src = it.url || (it.b64 ? ("data:image/png;base64," + it.b64) : "");
+    card.innerHTML = `
+      &lt;div class="badge"&gt;${it.provider || "unknown"}&lt;/div&gt;
+      ${src ? `&lt;img src="<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi>s</mi><mi>r</mi><mi>c</mi></mrow><mi mathvariant="normal">&quot;</mi><mi>a</mi><mi>l</mi><mi>t</mi><mo>=</mo><mi mathvariant="normal">&quot;</mi><mi>i</mi><mi>m</mi><mi>g</mi><mo>−</mo></mrow><annotation encoding="application/x-tex">{src}&quot; alt=&quot;img-</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord"><span class="mord mathnormal">src</span></span><span class="mord">&quot;</span><span class="mord mathnormal">a</span><span class="mord mathnormal">lt</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord">&quot;</span><span class="mord mathnormal">im</span><span class="mord mathnormal" style="margin-right:0.03588em;">g</span><span class="mord">−</span></span></span></span>{idx}"/&gt;` : "&lt;div&gt;No image&lt;/div&gt;"}
+    `;
+    container.appendChild(card);
+  });
+}
+async function generate() {
+  const prompt = document.getElementById("prompt").value.trim();
+  const count = parseInt(document.getElementById("count").value || "1", 10);
+  const aspect = document.getElementById("aspect").value;
+  const seedRaw = document.getElementById("seed").value.trim();
+  const seed = seedRaw ? parseInt(seedRaw, 10) : null;
+  const provider = document.getElementById("provider").value;
+  const hordeKey = document.getElementById("hordeKey").value.trim() || null;
+  const proxy = document.getElementById("hordeProxy").value.trim() || null;
+  if (!prompt) {
+    document.getElementById("status").textContent = "Please enter a prompt.";
+    return;
+  }
+  const [w, h] = aspectToSize(aspect);
+  document.getElementById("status").textContent = "Working...";
+  document.getElementById("go").disabled = true;
+  try {
+    let items = [];
+    if (provider === "pollinations") {
+      items = pollinationsUrls(prompt, count, w, h, seed).map(u =&gt; ({ provider: "pollinations", url: u }));
+    } else if (provider === "stable_horde") {
+      for (let i = 0; i &lt; count; i++) {
+        const id = await hordeSubmit(prompt, w, h, Number.isInteger(seed) ? seed + i : null, hordeKey, proxy);
+        const status = await hordePoll(id, hordeKey, proxy);
+        const gen = status.generations.find(g =&gt; g.img);
+        if (gen &amp;&amp; gen.img) items.push({ provider: "stable_horde", b64: gen.img });
+      }
+    } else if (provider === "one_each") {
+      try {
+        const id = await hordeSubmit(prompt, w, h, seed, hordeKey, proxy);
+        const status = await hordePoll(id, hordeKey, proxy);
+        const gen = status.generations.find(g =&gt; g.img);
+        if (gen &amp;&amp; gen.img) items.push({ provider: "stable_horde", b64: gen.img });
+      } catch (e) {
+        console.warn("Horde failed:", e);
+      }
+      items.push({ provider: "pollinations", url: pollinationsUrls(prompt, 1, w, h, seed)[0] });
+      while (items.length &lt; count) {
+        const s = Number.isInteger(seed) ? seed + items.length : null;
+        items.push({ provider: "pollinations", url: pollinationsUrls(prompt, 1, w, h, s)[0] });
+      }
+    } else {
+      // Auto
+      try {
+        for (let i = 0; i &lt; count; i++) {
+          const id = await hordeSubmit(prompt, w, h, Number.isInteger(seed) ? seed + i : null, hordeKey, proxy);
+          const status = await hordePoll(id, hordeKey, proxy);
+          const gen = status.generations.find(g =&gt; g.img);
+          if (gen &amp;&amp; gen.img) items.push({ provider: "stable_horde", b64: gen.img });
+        }
+      } catch (e) {
+        console.warn("Horde failed, using Pollinations:", e);
+      }
+      if (items.length &lt; count) {
+        const needed = count - items.length;
+        const start = Number.isInteger(seed) ? seed + items.length : null;
+        const urls = pollinationsUrls(prompt, needed, w, h, start);
+        items.push(...urls.map(u =&gt; ({ provider: "pollinations", url: u })));
+      }
+    }
+    render(items);
+    document.getElementById("status").textContent = `Done. Returned ${items.length} image(s).`;
+  } catch (e) {
+    console.error(e);
+    document.getElementById("status").textContent = "Error: " + (e.message || e);
+  } finally {
+    document.getElementById("go").disabled = false;
+  }
+}
+document.getElementById("go").onclick = generate;
+</script>
+</body>
+</html>
