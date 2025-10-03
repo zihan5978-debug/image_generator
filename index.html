@@ -477,11 +477,11 @@
             <select id="provider">
               <option value="auto" selected>🚀 Auto (Best Quality)</option>
               <option value="pollinations">🌸 Pollinations (Fast)</option>
-              <option value="stable_horde">🎯 Stable Horde (High Quality)</option>
-              <option value="picsum">📸 Picsum (Random Images)</option>
-              <option value="lorem_picsum">🖼️ Lorem Picsum (Photos)</option>
-              <option value="placeholder">🎨 Placeholder (Abstract)</option>
-              <option value="dicebear">👤 DiceBear (Avatars)</option>
+              <option value="stable_horde">🎯 Stable Horde (SD 1.5)</option>
+              <option value="stable_horde_dreamshaper">🎨 Stable Horde (DreamShaper)</option>
+              <option value="stable_horde_realistic">📸 Stable Horde (Realistic Vision)</option>
+              <option value="stable_horde_anime">🎌 Stable Horde (Anime)</option>
+              <option value="deepai">🤖 DeepAI (Free)</option>
               <option value="one_each">🔄 One from Each</option>
             </select>
           </div>
@@ -765,84 +765,77 @@
       return Array.from({length: count}, (_, i) => `${base}&seed=${startSeed + i}`);
     }
 
-    // Picsum - Random beautiful images
-    function picsumGenerate(prompt, count, width, height, seed) {
+    // DeepAI - Free AI image generation
+    async function deepaiGenerate(prompt, count, width, height, seed) {
       const items = [];
-      const startSeed = Number.isInteger(seed) ? seed : Date.now();
       for (let i = 0; i < count; i++) {
-        const imageId = (startSeed + i) % 1000; // Cycle through 1000 images
-        items.push({
-          provider: "picsum",
-          url: `https://picsum.photos/${width}/${height}?random=${imageId}`
-        });
+        try {
+          const response = await fetch('https://api.deepai.org/api/text2img', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `text=${encodeURIComponent(prompt)}`
+          });
+          
+          if (response.ok) {
+            const result = await response.json();
+            if (result.output_url) {
+              items.push({
+                provider: "deepai",
+                url: result.output_url
+              });
+            }
+          }
+        } catch (e) {
+          console.warn('DeepAI generation failed:', e);
+        }
       }
       return items;
     }
 
-    // Lorem Picsum - High quality photos
-    function loremPicsumGenerate(prompt, count, width, height, seed) {
-      const items = [];
-      const startSeed = Number.isInteger(seed) ? seed : Date.now();
-      for (let i = 0; i < count; i++) {
-        const imageId = (startSeed + i) % 1000;
-        items.push({
-          provider: "lorem_picsum",
-          url: `https://picsum.photos/id/${imageId}/${width}/${height}`
-        });
-      }
-      return items;
-    }
+    async function hordeSubmit(prompt, width, height, seed, apiKey, proxyBase, model = "stable_diffusion") {
+      // Model configurations
+      const models = {
+        "stable_diffusion": {
+          model: "stable_diffusion",
+          sampler_name: "k_euler",
+          cfg_scale: 7,
+          steps: 28
+        },
+        "dreamshaper": {
+          model: "dreamshaper_8",
+          sampler_name: "k_euler",
+          cfg_scale: 7,
+          steps: 25
+        },
+        "realistic_vision": {
+          model: "realistic_vision_v5",
+          sampler_name: "k_euler",
+          cfg_scale: 7,
+          steps: 30
+        },
+        "anime": {
+          model: "anything_v5",
+          sampler_name: "k_euler",
+          cfg_scale: 7,
+          steps: 25
+        }
+      };
 
-    // Placeholder.com - Abstract patterns
-    function placeholderGenerate(prompt, count, width, height, seed) {
-      const items = [];
-      const colors = ['FF6B6B', '4ECDC4', '45B7D1', '96CEB4', 'FFEAA7', 'DDA0DD', '98D8C8', 'F7DC6F'];
-      const startSeed = Number.isInteger(seed) ? seed : Date.now();
+      const modelConfig = models[model] || models["stable_diffusion"];
       
-      for (let i = 0; i < count; i++) {
-        const colorIndex = (startSeed + i) % colors.length;
-        const bgColor = colors[colorIndex];
-        const textColor = 'FFFFFF';
-        const text = encodeURIComponent(prompt.substring(0, 20)); // First 20 chars of prompt
-        
-        items.push({
-          provider: "placeholder",
-          url: `https://via.placeholder.com/${width}x${height}/${bgColor}/${textColor}?text=${text}`
-        });
-      }
-      return items;
-    }
-
-    // DiceBear - Avatar generation
-    function dicebearGenerate(prompt, count, width, height, seed) {
-      const items = [];
-      const styles = ['avataaars', 'personas', 'micah', 'adventurer', 'big-smile', 'bottts', 'croodles', 'fun-emoji'];
-      const startSeed = Number.isInteger(seed) ? seed : Date.now();
-      
-      for (let i = 0; i < count; i++) {
-        const styleIndex = (startSeed + i) % styles.length;
-        const style = styles[styleIndex];
-        const seedValue = startSeed + i;
-        
-        items.push({
-          provider: "dicebear",
-          url: `https://api.dicebear.com/7.x/${style}/svg?seed=${seedValue}&width=${width}&height=${height}`
-        });
-      }
-      return items;
-    }
-
-    async function hordeSubmit(prompt, width, height, seed, apiKey, proxyBase) {
       const payload = {
         prompt,
         params: {
-          sampler_name: "k_euler",
-          cfg_scale: 7,
+          sampler_name: modelConfig.sampler_name,
+          cfg_scale: modelConfig.cfg_scale,
           seed: Number.isInteger(seed) ? seed : null,
-          steps: 28,
+          steps: modelConfig.steps,
           width: Math.round(width / 64) * 64,
           height: Math.round(height / 64) * 64
         },
+        models: [modelConfig.model],
         nsfw: false,
         censor_nsfw: true,
         trusted_workers: false,
@@ -937,18 +930,12 @@
         
         if (provider === "pollinations") {
           items = pollinationsUrls(prompt, count, w, h, seed).map(u => ({ provider: "pollinations", url: u }));
-        } else if (provider === "picsum") {
-          items = picsumGenerate(prompt, count, w, h, seed);
-        } else if (provider === "lorem_picsum") {
-          items = loremPicsumGenerate(prompt, count, w, h, seed);
-        } else if (provider === "placeholder") {
-          items = placeholderGenerate(prompt, count, w, h, seed);
-        } else if (provider === "dicebear") {
-          items = dicebearGenerate(prompt, count, w, h, seed);
+        } else if (provider === "deepai") {
+          items = await deepaiGenerate(prompt, count, w, h, seed);
         } else if (provider === "stable_horde") {
           for (let i = 0; i < count; i++) {
             try {
-              const id = await hordeSubmit(prompt, w, h, Number.isInteger(seed) ? seed + i : null, hordeKey, proxy);
+              const id = await hordeSubmit(prompt, w, h, Number.isInteger(seed) ? seed + i : null, hordeKey, proxy, "stable_diffusion");
               const status = await hordePoll(id, hordeKey, proxy);
               const gen = status.generations.find(g => g.img);
               if (gen && gen.img) items.push({ provider: "stable_horde", b64: gen.img });
@@ -956,22 +943,74 @@
               console.warn(`Horde generation ${i + 1} failed:`, e);
             }
           }
+        } else if (provider === "stable_horde_dreamshaper") {
+          for (let i = 0; i < count; i++) {
+            try {
+              const id = await hordeSubmit(prompt, w, h, Number.isInteger(seed) ? seed + i : null, hordeKey, proxy, "dreamshaper");
+              const status = await hordePoll(id, hordeKey, proxy);
+              const gen = status.generations.find(g => g.img);
+              if (gen && gen.img) items.push({ provider: "stable_horde_dreamshaper", b64: gen.img });
+            } catch (e) {
+              console.warn(`DreamShaper generation ${i + 1} failed:`, e);
+            }
+          }
+        } else if (provider === "stable_horde_realistic") {
+          for (let i = 0; i < count; i++) {
+            try {
+              const id = await hordeSubmit(prompt, w, h, Number.isInteger(seed) ? seed + i : null, hordeKey, proxy, "realistic_vision");
+              const status = await hordePoll(id, hordeKey, proxy);
+              const gen = status.generations.find(g => g.img);
+              if (gen && gen.img) items.push({ provider: "stable_horde_realistic", b64: gen.img });
+            } catch (e) {
+              console.warn(`Realistic Vision generation ${i + 1} failed:`, e);
+            }
+          }
+        } else if (provider === "stable_horde_anime") {
+          for (let i = 0; i < count; i++) {
+            try {
+              const id = await hordeSubmit(prompt, w, h, Number.isInteger(seed) ? seed + i : null, hordeKey, proxy, "anime");
+              const status = await hordePoll(id, hordeKey, proxy);
+              const gen = status.generations.find(g => g.img);
+              if (gen && gen.img) items.push({ provider: "stable_horde_anime", b64: gen.img });
+            } catch (e) {
+              console.warn(`Anime generation ${i + 1} failed:`, e);
+            }
+          }
         } else if (provider === "one_each") {
-          // Try multiple providers for variety
+          // Try multiple AI providers for variety
           const providers = [
             { name: "pollinations", func: () => pollinationsUrls(prompt, 1, w, h, seed).map(u => ({ provider: "pollinations", url: u })) },
-            { name: "picsum", func: () => picsumGenerate(prompt, 1, w, h, seed) },
-            { name: "lorem_picsum", func: () => loremPicsumGenerate(prompt, 1, w, h, seed) },
-            { name: "placeholder", func: () => placeholderGenerate(prompt, 1, w, h, seed) },
-            { name: "dicebear", func: () => dicebearGenerate(prompt, 1, w, h, seed) },
+            { name: "deepai", func: () => deepaiGenerate(prompt, 1, w, h, seed) },
             { name: "stable_horde", func: async () => {
               try {
-                const id = await hordeSubmit(prompt, w, h, seed, hordeKey, proxy);
+                const id = await hordeSubmit(prompt, w, h, seed, hordeKey, proxy, "stable_diffusion");
                 const status = await hordePoll(id, hordeKey, proxy);
                 const gen = status.generations.find(g => g.img);
                 return gen && gen.img ? [{ provider: "stable_horde", b64: gen.img }] : [];
               } catch (e) {
                 console.warn("Horde failed:", e);
+                return [];
+              }
+            }},
+            { name: "dreamshaper", func: async () => {
+              try {
+                const id = await hordeSubmit(prompt, w, h, seed, hordeKey, proxy, "dreamshaper");
+                const status = await hordePoll(id, hordeKey, proxy);
+                const gen = status.generations.find(g => g.img);
+                return gen && gen.img ? [{ provider: "stable_horde_dreamshaper", b64: gen.img }] : [];
+              } catch (e) {
+                console.warn("DreamShaper failed:", e);
+                return [];
+              }
+            }},
+            { name: "realistic_vision", func: async () => {
+              try {
+                const id = await hordeSubmit(prompt, w, h, seed, hordeKey, proxy, "realistic_vision");
+                const status = await hordePoll(id, hordeKey, proxy);
+                const gen = status.generations.find(g => g.img);
+                return gen && gen.img ? [{ provider: "stable_horde_realistic", b64: gen.img }] : [];
+              } catch (e) {
+                console.warn("Realistic Vision failed:", e);
                 return [];
               }
             }}
