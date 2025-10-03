@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
   <style>
     * {
@@ -201,7 +202,7 @@
       font-weight: 300;
     }
     
-    .logout-btn {
+    .logout-btn, .nav-btn {
       padding: 10px 20px;
       background: rgba(255,255,255,0.2);
       border: 1px solid rgba(255,255,255,0.3);
@@ -209,9 +210,10 @@
       border-radius: 8px;
       cursor: pointer;
       transition: background-color 0.2s;
+      margin-left: 10px;
     }
     
-    .logout-btn:hover {
+    .logout-btn:hover, .nav-btn:hover {
       background: rgba(255,255,255,0.3);
     }
     
@@ -242,7 +244,7 @@
       min-width: 200px;
     }
     
-    .controls textarea, .controls input, .controls select, .controls button { 
+    .controls input, .controls select, .controls button { 
       padding: 12px; 
       font-size: 14px; 
       border: 2px solid #e1e5e9;
@@ -250,16 +252,9 @@
       transition: border-color 0.3s;
     }
     
-    .controls textarea:focus, .controls input:focus, .controls select:focus {
+    .controls input:focus, .controls select:focus {
       outline: none;
       border-color: #667eea;
-    }
-    
-    .controls textarea { 
-      width: 100%; 
-      height: 120px; 
-      resize: vertical;
-      font-family: inherit;
     }
     
     .controls label {
@@ -355,6 +350,32 @@
       border: 1px solid #ffcdd2;
     }
     
+    .template-checkboxes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    
+    .template-checkboxes label {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .image-feedback {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    
+    .image-feedback button {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    
     @media (max-width: 768px) {
       .row {
         flex-direction: column;
@@ -405,14 +426,18 @@
       
       <!-- Registration Form -->
       <form id="register-form" class="hidden">
-        <!-- Step 1: Email -->
+        <!-- Step 1: Email and Industry Code -->
         <div id="register-step1">
           <div class="form-group">
             <label for="register-email">Email Address</label>
-            <div class="code-input-group">
-              <input id="register-email" type="email" required autocomplete="username" placeholder="Enter your email">
-              <button type="button" id="send-code-btn" class="btn btn-code">Send Code</button>
-            </div>
+            <input id="register-email" type="email" required autocomplete="username" placeholder="Enter your email">
+          </div>
+          <div class="form-group">
+            <label for="register-industry-code">Industry Code</label>
+            <input id="register-industry-code" type="text" required placeholder="Enter industry code">
+          </div>
+          <div class="code-input-group">
+            <button type="button" id="send-code-btn" class="btn btn-code">Send Code</button>
           </div>
           <div id="register-msg-step1" class="message" style="display: none;"></div>
         </div>
@@ -455,87 +480,110 @@
     </div>
   </div>
 
+  <!-- Setup Page -->
+  <div id="setup-page" class="main-app hidden">
+    <div class="app-header">
+      <h1>Setup Your Profile</h1>
+      <button id="setup-logout-btn" class="logout-btn">Logout</button>
+    </div>
+    <div class="app-content">
+      <div class="controls">
+        <form id="setup-form">
+          <div class="form-group">
+            <label for="setup-name">Full Name</label>
+            <input id="setup-name" type="text" required placeholder="Enter your full name">
+          </div>
+          <div class="form-group">
+            <label for="setup-phone">Phone Number (Optional)</label>
+            <input id="setup-phone" type="tel" placeholder="Enter your phone number">
+          </div>
+          <button type="submit" class="btn">Save Profile</button>
+          <div id="setup-msg" class="message" style="display: none;"></div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <!-- Main Application -->
   <div id="main-app" class="main-app">
     <div class="app-header">
       <h1>🎨 AI Design Generator</h1>
-      <button id="logout-btn" class="logout-btn">Logout</button>
+      <div>
+        <button id="account-btn" class="nav-btn">Account</button>
+        <button id="templates-btn" class="nav-btn">Templates</button>
+        <button id="records-btn" class="nav-btn">Past Records</button>
+        <button id="logout-btn" class="logout-btn">Logout</button>
+      </div>
     </div>
     
     <div class="app-content">
-      <div class="controls">
-        <div class="row">
-          <div style="flex: 2;">
-            <label for="prompt">Describe your design</label>
-            <textarea id="prompt" placeholder="e.g., 'Minimalist product hero shot, studio lighting, soft shadows, high detail'"></textarea>
-          </div>
+      <!-- Account Page -->
+      <div id="account-page" class="hidden">
+        <div class="controls">
+          <h2>Account Information</h2>
+          <form id="account-form">
+            <div class="form-group">
+              <label for="account-name">Full Name</label>
+              <input id="account-name" type="text" required placeholder="Enter your full name">
+            </div>
+            <div class="form-group">
+              <label for="account-phone">Phone Number (Optional)</label>
+              <input id="account-phone" type="tel" placeholder="Enter your phone number">
+            </div>
+            <button type="submit" class="btn">Update Profile</button>
+            <div id="account-msg" class="message" style="display: none;"></div>
+          </form>
         </div>
-        
-        <div class="row">
-          <div>
-            <label for="provider">AI Provider</label>
-            <select id="provider">
-              <option value="auto" selected>🚀 Auto (Best Quality)</option>
-              <option value="pollinations">🌸 Pollinations (Fast)</option>
-              <option value="test_images">🧪 Test Images (Working)</option>
-              <option value="unsplash">📷 Unsplash (Photos)</option>
-              <option value="stable_horde">🎯 Stable Horde (SD 1.5)</option>
-              <option value="stable_horde_dreamshaper">🎨 Stable Horde (DreamShaper)</option>
-              <option value="stable_horde_realistic">📸 Stable Horde (Realistic Vision)</option>
-              <option value="stable_horde_anime">🎌 Stable Horde (Anime)</option>
-              <option value="one_each">🔄 One from Each</option>
-            </select>
-          </div>
-          <div>
-            <label for="count">Image Count</label>
-            <input id="count" type="number" min="1" max="8" value="3"/>
-          </div>
-          <div>
-            <label for="aspect">Aspect Ratio</label>
-            <select id="aspect">
-              <option>1:1</option>
-              <option selected>3:4</option>
-              <option>4:3</option>
-              <option>9:16</option>
-              <option>16:9</option>
-            </select>
-          </div>
-          <div>
-            <label for="seed">Seed (Optional)</label>
-            <input id="seed" type="number" placeholder="e.g. 12345"/>
-          </div>
-        </div>
-        
-        <div class="row">
-          <div>
-            <label for="hordeKey">Horde API Key (Optional)</label>
-            <input id="hordeKey" type="text" placeholder="Leave empty for anonymous"/>
-          </div>
-          <div>
-            <label for="hordeProxy">Horde Proxy URL (Optional)</label>
-            <input id="hordeProxy" type="text" placeholder="https://your-worker.workers.dev"/>
-          </div>
-          <div style="display: flex; align-items: end;">
-            <button id="go" class="generate-btn">✨ Generate Images</button>
-          </div>
-        </div>
-        
-        <div id="status"></div>
       </div>
-      
-      <div id="results" class="grid"></div>
+
+      <!-- Template Page -->
+      <div id="template-page">
+        <div class="controls">
+          <h2>Select Template</h2>
+          <div id="template-checkboxes" class="template-checkboxes"></div>
+          <button id="generate-btn" class="generate-btn">✨ Generate Images</button>
+          <div id="status"></div>
+        </div>
+        <div id="results" class="grid"></div>
+      </div>
+
+      <!-- Past Records Page -->
+      <div id="records-page" class="hidden">
+        <div class="controls">
+          <h2>Past Records</h2>
+          <div id="records-grid" class="grid"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Master Dashboard -->
+  <div id="master-dashboard" class="main-app hidden">
+    <div class="app-header">
+      <h1>Master Dashboard</h1>
+      <button id="master-logout-btn" class="logout-btn">Logout</button>
+    </div>
+    <div class="app-content">
+      <div class="controls">
+        <h2>Manage Templates</h2>
+        <form id="template-form">
+          <div class="form-group">
+            <label for="template-name">Template Name</label>
+            <input id="template-name" type="text" required placeholder="Enter template name">
+          </div>
+          <div class="form-group">
+            <label for="template-description">Description</label>
+            <input id="template-description" type="text" required placeholder="Enter template description">
+          </div>
+          <button type="submit" class="btn">Add Template</button>
+        </form>
+        <div id="template-list" class="grid"></div>
+        <div id="master-msg" class="message" style="display: none;"></div>
+      </div>
     </div>
   </div>
 
   <script>
-    // EmailJS Configuration - REPLACE THESE WITH YOUR ACTUAL VALUES
-    const EMAILJS_SERVICE_ID = 'YOUR_SERVICE_ID_HERE';        // Replace with your service ID
-    const EMAILJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID_HERE';      // Replace with your template ID
-    const EMAILJS_PUBLIC_KEY = 'YOUR_PUBLIC_KEY_HERE';        // Replace with your public key
-    
-    // Initialize EmailJS with your public key
-    emailjs.init(EMAILJS_PUBLIC_KEY);
-
     // Firebase Configuration
     const firebaseConfig = {
       apiKey: "AIzaSyBtF_37PsX1ItQobFZkOVSMUEio2NPmdoM",
@@ -548,9 +596,21 @@
     };
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // EmailJS Configuration
+    const EMAILJS_SERVICE_ID = 'service_ghvr7ui';
+    const EMAILJS_TEMPLATE_ID = 'template_x4lt4dk';
+    emailjs.init('gtluK1AW_Y5bE9mVp');
 
     // Global state
     let currentUser = null;
+    let userRole = null;
+    let userData = null;
+    let selectedTemplate = null;
+    let generationCount = 0;
+    const MAX_GENERATIONS = 20;
+    let pastRecords = [];
 
     // UI Helper Functions
     function showElement(id) {
@@ -590,7 +650,6 @@
       showElement('register-form');
       hideElement('switch-to-register');
       showElement('switch-to-login');
-      // Reset registration form
       showElement('register-step1');
       hideElement('register-step2');
       hideElement('register-step3');
@@ -600,14 +659,35 @@
       hideMessage('register-msg-step3');
     }
 
+    function showSetupPage() {
+      hideElement('auth-container');
+      hideElement('main-app');
+      hideElement('master-dashboard');
+      showElement('setup-page');
+    }
+
     function showMainApp() {
-      document.getElementById('auth-container').style.display = 'none';
-      document.getElementById('main-app').classList.add('show');
+      hideElement('auth-container');
+      hideElement('setup-page');
+      hideElement('master-dashboard');
+      showElement('main-app');
+      showElement('template-page');
+      hideElement('account-page');
+      hideElement('records-page');
+    }
+
+    function showMasterDashboard() {
+      hideElement('auth-container');
+      hideElement('setup-page');
+      hideElement('main-app');
+      showElement('master-dashboard');
     }
 
     function showAuth() {
-      document.getElementById('auth-container').style.display = 'block';
-      document.getElementById('main-app').classList.remove('show');
+      showElement('auth-container');
+      hideElement('setup-page');
+      hideElement('main-app');
+      hideElement('master-dashboard');
       showLogin();
     }
 
@@ -617,67 +697,92 @@
         showMessage('login-msg', 'Signing in...', 'info');
         const result = await auth.signInWithEmailAndPassword(email, password);
         currentUser = result.user;
+        await loadUserData();
         hideMessage('login-msg');
-        showMainApp();
+        if (!userData || !userData.name) {
+          showSetupPage();
+        } else if (userRole === 'master') {
+          showMasterDashboard();
+        } else {
+          showMainApp();
+          loadTemplates();
+        }
       } catch (err) {
         showMessage('login-msg', err.message, 'error');
       }
     }
 
-    function handleLogout() {
-      auth.signOut().then(() => {
-        currentUser = null;
-        showAuth();
-      });
+    async function handleLogout() {
+      await auth.signOut();
+      currentUser = null;
+      userRole = null;
+      userData = null;
+      selectedTemplate = null;
+      generationCount = 0;
+      pastRecords = [];
+      showAuth();
+    }
+
+    // User Data Functions
+    async function loadUserData() {
+      if (!currentUser) return;
+      const userDoc = await db.collection('users').doc(currentUser.uid).get();
+      if (userDoc.exists) {
+        userData = userDoc.data();
+        userRole = userData.role || 'client';
+      } else {
+        userData = {};
+        userRole = 'client';
+      }
+    }
+
+    async function saveUserData(data) {
+      await db.collection('users').doc(currentUser.uid).set(data, { merge: true });
+      userData = { ...userData, ...data };
     }
 
     // Registration Functions
     async function sendVerificationCode() {
       const email = document.getElementById('register-email').value.trim();
-      if (!email) {
-        showMessage('register-msg-step1', 'Please enter your email address.', 'error');
+      const industryCode = document.getElementById('register-industry-code').value.trim();
+      if (!email || !industryCode) {
+        showMessage('register-msg-step1', 'Please enter both email and industry code.', 'error');
         return;
       }
-      
-      // Generate 6-digit verification code
+
+      // Verify industry code
+      const codeDoc = await db.collection('industryCodes').doc(industryCode).get();
+      if (!codeDoc.exists) {
+        showMessage('register-msg-step1', 'Invalid industry code.', 'error');
+        return;
+      }
+
       window._registerCode = Math.floor(100000 + Math.random() * 900000).toString();
       window._registerEmail = email;
-      
+      window._industryCode = industryCode;
+
       try {
         showMessage('register-msg-step1', 'Sending verification code...', 'info');
-        
-        // Send email with verification code
-        const response = await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-          to_email: email,           // Recipient email
-          code: window._registerCode, // 6-digit verification code
-          from_name: 'AI Design Generator',
-          reply_to: email,
-          message: `Your verification code is: ${window._registerCode}`
+        await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+          email: email,
+          code: window._registerCode
         });
-        
-        console.log('Email sent successfully:', response);
-        showMessage('register-msg-step1', '✅ Verification code sent to your email! Check your inbox.', 'success');
+        showMessage('register-msg-step1', 'Verification code sent to your email!', 'success');
         hideElement('register-step1');
         showElement('register-step2');
-        
       } catch (err) {
-        console.error('Email sending failed:', err);
-        showMessage('register-msg-step1', '❌ Failed to send email: ' + (err.text || err.message), 'error');
+        showMessage('register-msg-step1', 'Failed to send email: ' + (err.text || err.message), 'error');
       }
     }
 
     function verifyCode() {
       const code = document.getElementById('register-code').value.trim();
-      console.log('Entered code:', code);
-      console.log('Expected code:', window._registerCode);
-      
       if (code === window._registerCode) {
         hideMessage('register-msg-step2');
         hideElement('register-step2');
         showElement('register-step3');
-        showMessage('register-msg-step3', 'Code verified! Please complete your registration.', 'success');
       } else {
-        showMessage('register-msg-step2', `Incorrect verification code. Expected: ${window._registerCode}, Got: ${code}`, 'error');
+        showMessage('register-msg-step2', 'Incorrect verification code.', 'error');
       }
     }
 
@@ -685,26 +790,320 @@
       const password = document.getElementById('register-password').value;
       const password2 = document.getElementById('register-password2').value;
       const name = document.getElementById('register-name').value;
-      
+
       if (password !== password2) {
         showMessage('register-msg-step3', 'Passwords do not match.', 'error');
         return;
       }
-      
+
       if (password.length < 6) {
         showMessage('register-msg-step3', 'Password must be at least 6 characters.', 'error');
         return;
       }
-      
+
       try {
         showMessage('register-msg-step3', 'Creating your account...', 'info');
         const result = await auth.createUserWithEmailAndPassword(window._registerEmail, password);
         currentUser = result.user;
+        const codeDoc = await db.collection('industryCodes').doc(window._industryCode).get();
+        const templateIds = codeDoc.data().templateIds || [];
+        await saveUserData({
+          name,
+          role: 'client',
+          templateIds,
+          industryCode: window._industryCode
+        });
         showMessage('register-msg-step3', 'Account created successfully!', 'success');
-        setTimeout(() => showMainApp(), 1000);
+        setTimeout(() => showSetupPage(), 1000);
       } catch (err) {
         showMessage('register-msg-step3', err.message, 'error');
       }
+    }
+
+    // Setup Page Functions
+    async function handleSetup() {
+      const name = document.getElementById('setup-name').value.trim();
+      const phone = document.getElementById('setup-phone').value.trim();
+      if (!name) {
+        showMessage('setup-msg', 'Please enter your full name.', 'error');
+        return;
+      }
+
+      try {
+        showMessage('setup-msg', 'Saving profile...', 'info');
+        await saveUserData({ name, phone });
+        showMessage('setup-msg', 'Profile saved successfully!', 'success');
+        setTimeout(() => {
+          if (userRole === 'master') {
+            showMasterDashboard();
+          } else {
+            showMainApp();
+            loadTemplates();
+          }
+        }, 1000);
+      } catch (err) {
+        showMessage('setup-msg', 'Error saving profile: ' + err.message, 'error');
+      }
+    }
+
+    // Account Page Functions
+    async function loadAccountInfo() {
+      document.getElementById('account-name').value = userData.name || '';
+      document.getElementById('account-phone').value = userData.phone || '';
+    }
+
+    async function handleAccountUpdate() {
+      const name = document.getElementById('account-name').value.trim();
+      const phone = document.getElementById('account-phone').value.trim();
+      if (!name) {
+        showMessage('account-msg', 'Please enter your full name.', 'error');
+        return;
+      }
+
+      try {
+        showMessage('account-msg', 'Updating profile...', 'info');
+        await saveUserData({ name, phone });
+        showMessage('account-msg', 'Profile updated successfully!', 'success');
+      } catch (err) {
+        showMessage('account-msg', 'Error updating profile: ' + err.message, 'error');
+      }
+    }
+
+    // Template Management Functions
+    async function loadTemplates() {
+      if (userRole === 'master') {
+        const templateList = document.getElementById('template-list');
+        templateList.innerHTML = '';
+        const templates = await db.collection('templates').get();
+        templates.forEach(doc => {
+          const data = doc.data();
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.innerHTML = `
+            <div class="badge">${data.name}</div>
+            <p>${data.description}</p>
+            <button onclick="deleteTemplate('${doc.id}')">Delete</button>
+          `;
+          templateList.appendChild(card);
+        });
+      } else {
+        const templateCheckboxes = document.getElementById('template-checkboxes');
+        templateCheckboxes.innerHTML = '';
+        const templateIds = userData.templateIds || [];
+        for (const id of templateIds) {
+          const templateDoc = await db.collection('templates').doc(id).get();
+          if (templateDoc.exists) {
+            const data = templateDoc.data();
+            const div = document.createElement('div');
+            div.innerHTML = `
+              <label>
+                <input type="radio" name="template" value="${id}" onchange="selectTemplate(this.value)">
+                ${data.name}
+              </label>
+            `;
+            templateCheckboxes.appendChild(div);
+          }
+        }
+      }
+    }
+
+    async function addTemplate() {
+      const name = document.getElementById('template-name').value.trim();
+      const description = document.getElementById('template-description').value.trim();
+      if (!name || !description) {
+        showMessage('master-msg', 'Please enter both name and description.', 'error');
+        return;
+      }
+
+      try {
+        showMessage('master-msg', 'Adding template...', 'info');
+        const templateRef = await db.collection('templates').add({ name, description });
+        const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+        await db.collection('industryCodes').doc(code).set({ templateIds: [templateRef.id] });
+        showMessage('master-msg', `Template added! Industry code: ${code}`, 'success');
+        document.getElementById('template-form').reset();
+        loadTemplates();
+      } catch (err) {
+        showMessage('master-msg', 'Error adding template: ' + err.message, 'error');
+      }
+    }
+
+    async function deleteTemplate(templateId) {
+      try {
+        showMessage('master-msg', 'Deleting template...', 'info');
+        await db.collection('templates').doc(templateId).delete();
+        // Remove template from all industry codes
+        const codes = await db.collection('industryCodes').get();
+        codes.forEach(async doc => {
+          const data = doc.data();
+          const templateIds = data.templateIds.filter(id => id !== templateId);
+          await db.collection('industryCodes').doc(doc.id).update({ templateIds });
+        });
+        showMessage('master-msg', 'Template deleted successfully!', 'success');
+        loadTemplates();
+      } catch (err) {
+        showMessage('master-msg', 'Error deleting template: ' + err.message, 'error');
+      }
+    }
+
+    function selectTemplate(templateId) {
+      selectedTemplate = templateId;
+    }
+
+    // Image Generation Functions
+    function aspectToSize(ar) {
+      const map = { 
+        "1:1": [768,768], 
+        "3:4": [768,1024], 
+        "4:3": [1024,768], 
+        "9:16": [768,1365], 
+        "16:9": [1365,768] 
+      };
+      return map[ar] || [768,1024];
+    }
+
+    function pollinationsUrls(prompt, count, width, height, seed) {
+      const quoted = encodeURIComponent(prompt);
+      const base = `https://image.pollinations.ai/prompt/${quoted}?width=${width}&height=${height}&n=1`;
+      const startSeed = Number.isInteger(seed) ? seed : Date.now();
+      return Array.from({length: count}, (_, i) => `${base}&seed=${startSeed + i}`);
+    }
+
+    async function generateImages() {
+      if (!currentUser) {
+        updateStatus("⚠️ Please sign in first.", "error");
+        return;
+      }
+
+      if (!selectedTemplate) {
+        updateStatus("⚠️ Please select a template.", "error");
+        return;
+      }
+
+      if (generationCount >= MAX_GENERATIONS) {
+        updateStatus("⚠️ Maximum generation attempts reached.", "error");
+        return;
+      }
+
+      const templateDoc = await db.collection('templates').doc(selectedTemplate).get();
+      const prompt = templateDoc.data().description;
+      const [w, h] = aspectToSize('3:4'); // Default aspect ratio
+      updateStatus("🎨 Generating your images... This may take a moment.", "working");
+      document.getElementById("generate-btn").disabled = true;
+
+      try {
+        const urls = pollinationsUrls(prompt, 2, w, h, Date.now());
+        const items = urls.map(u => ({ provider: "pollinations", url: u }));
+        generationCount++;
+        renderImages(items);
+        // Save to past records
+        const record = {
+          userId: currentUser.uid,
+          templateId: selectedTemplate,
+          images: items,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        await db.collection('records').add(record);
+        pastRecords.push(record);
+        if (pastRecords.length > 3) {
+          pastRecords.shift();
+          const oldRecords = await db.collection('records')
+            .where('userId', '==', currentUser.uid)
+            .orderBy('timestamp', 'asc')
+            .limit(1)
+            .get();
+          oldRecords.forEach(doc => doc.ref.delete());
+        }
+        updateStatus(`✅ Generated 2 images successfully!`, "success");
+      } catch (e) {
+        console.error(e);
+        updateStatus(`❌ Error: ${e.message || e}`, "error");
+      } finally {
+        document.getElementById("generate-btn").disabled = false;
+      }
+    }
+
+    function renderImages(items) {
+      const container = document.getElementById("results");
+      container.innerHTML = "";
+      
+      if (items.length === 0) {
+        container.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;">No images generated</div>';
+        return;
+      }
+      
+      items.forEach((it, idx) => {
+        const card = document.createElement("div");
+        card.className = "card";
+        const src = it.url || (it.b64 ? ("data:image/png;base64," + it.b64) : "");
+        card.innerHTML = `
+          <div class="badge">${it.provider || "unknown"}</div>
+          ${src ? `<img src="${src}" alt="Generated image ${idx + 1}" loading="lazy"/>` : "<div>❌ Failed to generate</div>"}
+          <div class="image-feedback">
+            <button onclick="downloadImage(${idx}, '${src}')">${idx === 0 ? 'I like this' : 'I like that'}</button>
+            ${idx === 1 ? `<button onclick="regenerateImages()">Both bad</button>` : ''}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function downloadImage(index, url) {
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `generated-image-${index + 1}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function regenerateImages() {
+      if (generationCount < MAX_GENERATIONS) {
+        generateImages();
+      } else {
+        updateStatus("⚠️ Maximum generation attempts reached.", "error");
+      }
+    }
+
+    async function loadPastRecords() {
+      const records = await db.collection('records')
+        .where('userId', '==', currentUser.uid)
+        .orderBy('timestamp', 'desc')
+        .limit(3)
+        .get();
+      pastRecords = [];
+      records.forEach(doc => pastRecords.push(doc.data()));
+      renderPastRecords();
+    }
+
+    function renderPastRecords() {
+      const container = document.getElementById("records-grid");
+      container.innerHTML = "";
+      
+      if (pastRecords.length === 0) {
+        container.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;">No past records</div>';
+        return;
+      }
+      
+      pastRecords.forEach((record, idx) => {
+        record.images.forEach((it, imgIdx) => {
+          const card = document.createElement("div");
+          card.className = "card";
+          const src = it.url || (it.b64 ? ("data:image/png;base64," + it.b64) : "");
+          card.innerHTML = `
+            <div class="badge">Record ${pastRecords.length - idx}</div>
+            ${src ? `<img src="${src}" alt="Past image ${imgIdx + 1}" loading="lazy"/>` : "<div>❌ Failed to load</div>"}
+            <button onclick="downloadImage(${imgIdx}, '${src}')">Download</button>
+          `;
+          container.appendChild(card);
+        });
+      });
+    }
+
+    function updateStatus(message, type = '') {
+      const statusEl = document.getElementById("status");
+      statusEl.textContent = message;
+      statusEl.className = type ? `status-${type}` : '';
     }
 
     // Event Listeners
@@ -739,366 +1138,55 @@
 
       // Logout
       document.getElementById('logout-btn').addEventListener('click', handleLogout);
+      document.getElementById('setup-logout-btn').addEventListener('click', handleLogout);
+      document.getElementById('master-logout-btn').addEventListener('click', handleLogout);
+
+      // Setup form
+      document.getElementById('setup-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        handleSetup();
+      });
+
+      // Account form
+      document.getElementById('account-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        handleAccountUpdate();
+      });
+
+      // Template form
+      document.getElementById('template-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        addTemplate();
+      });
+
+      // Navigation
+      document.getElementById('account-btn').addEventListener('click', function() {
+        showElement('account-page');
+        hideElement('template-page');
+        hideElement('records-page');
+        loadAccountInfo();
+      });
+
+      document.getElementById('templates-btn').addEventListener('click', function() {
+        hideElement('account-page');
+        showElement('template-page');
+        hideElement('records-page');
+        loadTemplates();
+      });
+
+      document.getElementById('records-btn').addEventListener('click', function() {
+        hideElement('account-page');
+        hideElement('template-page');
+        showElement('records-page');
+        loadPastRecords();
+      });
 
       // Generate button
-      document.getElementById('go').addEventListener('click', generate);
+      document.getElementById('generate-btn').addEventListener('click', generateImages);
 
       // Initialize
       showAuth();
     });
-
-    // AI Generation Functions (same as before)
-    function aspectToSize(ar) {
-      const map = { 
-        "1:1": [768,768], 
-        "3:4": [768,1024], 
-        "4:3": [1024,768], 
-        "9:16": [768,1365], 
-        "16:9": [1365,768] 
-      };
-      return map[ar] || [768,1024];
-    }
-
-    function pollinationsUrls(prompt, count, width, height, seed) {
-      const quoted = encodeURIComponent(prompt);
-      const base = `https://image.pollinations.ai/prompt/${quoted}?width=${width}&height=${height}&n=1`;
-      const startSeed = Number.isInteger(seed) ? seed : Date.now();
-      return Array.from({length: count}, (_, i) => `${base}&seed=${startSeed + i}`);
-    }
-
-    // Test Images - Simple working images for testing
-    function testImagesGenerate(prompt, count, width, height, seed) {
-      const items = [];
-      const colors = ['FF6B6B', '4ECDC4', '45B7D1', '96CEB4', 'FFEAA7', 'DDA0DD', '98D8C8', 'F7DC6F'];
-      const startSeed = Number.isInteger(seed) ? seed : Date.now();
-      
-      for (let i = 0; i < count; i++) {
-        const colorIndex = (startSeed + i) % colors.length;
-        const bgColor = colors[colorIndex];
-        const textColor = 'FFFFFF';
-        const text = encodeURIComponent(prompt.substring(0, 15)); // First 15 chars of prompt
-        
-        items.push({
-          provider: "test_images",
-          url: `https://via.placeholder.com/${width}x${height}/${bgColor}/${textColor}?text=${text}`
-        });
-      }
-      return items;
-    }
-
-    // Unsplash - High quality photos based on prompt
-    function unsplashGenerate(prompt, count, width, height, seed) {
-      const items = [];
-      const startSeed = Number.isInteger(seed) ? seed : Date.now();
-      
-      for (let i = 0; i < count; i++) {
-        // Use prompt keywords for Unsplash search
-        const keywords = prompt.toLowerCase().split(' ').slice(0, 3).join(',');
-        const imageId = (startSeed + i) % 1000;
-        
-        items.push({
-          provider: "unsplash",
-          url: `https://source.unsplash.com/${width}x${height}/?${keywords}&sig=${imageId}`
-        });
-      }
-      return items;
-    }
-
-    async function hordeSubmit(prompt, width, height, seed, apiKey, proxyBase, model = "stable_diffusion") {
-      // Model configurations
-      const models = {
-        "stable_diffusion": {
-          model: "stable_diffusion",
-          sampler_name: "k_euler",
-          cfg_scale: 7,
-          steps: 28
-        },
-        "dreamshaper": {
-          model: "dreamshaper_8",
-          sampler_name: "k_euler",
-          cfg_scale: 7,
-          steps: 25
-        },
-        "realistic_vision": {
-          model: "realistic_vision_v5",
-          sampler_name: "k_euler",
-          cfg_scale: 7,
-          steps: 30
-        },
-        "anime": {
-          model: "anything_v5",
-          sampler_name: "k_euler",
-          cfg_scale: 7,
-          steps: 25
-        }
-      };
-
-      const modelConfig = models[model] || models["stable_diffusion"];
-      
-      const payload = {
-        prompt,
-        params: {
-          sampler_name: modelConfig.sampler_name,
-          cfg_scale: modelConfig.cfg_scale,
-          seed: Number.isInteger(seed) ? seed : null,
-          steps: modelConfig.steps,
-          width: Math.round(width / 64) * 64,
-          height: Math.round(height / 64) * 64
-        },
-        models: [modelConfig.model],
-        nsfw: false,
-        censor_nsfw: true,
-        trusted_workers: false,
-        slow_workers: false
-      };
-      const base = proxyBase || "https://aihorde.net/api/v2";
-      const r = await fetch(base + "/generate/async", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "accept": "application/json",
-          "apikey": apiKey || "0000000000"
-        },
-        body: JSON.stringify(payload),
-        mode: "cors"
-      });
-      
-      if (!r.ok) {
-        const errorText = await r.text();
-        console.error("Horde submit failed:", r.status, errorText);
-        throw new Error(`Horde submit failed: ${r.status} - ${errorText}`);
-      }
-      
-      const j = await r.json();
-      console.log("Horde response:", j);
-      
-      if (!j.id) {
-        console.error("No job id from Horde:", j);
-        throw new Error("No job id from Horde");
-      }
-      return j.id;
-    }
-
-    async function hordePoll(id, apiKey, proxyBase, timeoutMs = 240000, pollMs = 4000) {
-      const start = Date.now();
-      const base = proxyBase || "https://aihorde.net/api/v2";
-      while (Date.now() - start < timeoutMs) {
-        const r = await fetch(`${base}/generate/status/${id}`, {
-          headers: { "accept": "application/json", "apikey": apiKey || "0000000000" },
-          mode: "cors",
-        });
-        if (!r.ok) throw new Error("Horde status failed: " + r.status);
-        const j = await r.json();
-        if (j.done && j.generations && j.generations.length) return j;
-        await new Promise(res => setTimeout(res, pollMs));
-      }
-      throw new Error("Horde timed out");
-    }
-
-    function updateStatus(message, type = '') {
-      const statusEl = document.getElementById("status");
-      statusEl.textContent = message;
-      statusEl.className = type ? `status-${type}` : '';
-    }
-
-    function render(items) {
-      const container = document.getElementById("results");
-      container.innerHTML = "";
-      
-      if (items.length === 0) {
-        container.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;">No images generated</div>';
-        return;
-      }
-      
-      items.forEach((it, idx) => {
-        const card = document.createElement("div");
-        card.className = "card";
-        const src = it.url || (it.b64 ? ("data:image/png;base64," + it.b64) : "");
-        card.innerHTML = `
-          <div class="badge">${it.provider || "unknown"}</div>
-          ${src ? `<img src="${src}" alt="Generated image ${idx + 1}" loading="lazy"/>` : "<div>❌ Failed to generate</div>"}
-        `;
-        container.appendChild(card);
-      });
-    }
-
-    async function generate() {
-      if (!currentUser) {
-        updateStatus("⚠️ Please sign in first.", "error");
-        return;
-      }
-
-      const prompt = document.getElementById("prompt").value.trim();
-      const count = parseInt(document.getElementById("count").value || "1", 10);
-      const aspect = document.getElementById("aspect").value;
-      const seedRaw = document.getElementById("seed").value.trim();
-      const seed = seedRaw ? parseInt(seedRaw, 10) : null;
-      const provider = document.getElementById("provider").value;
-      const hordeKey = document.getElementById("hordeKey").value.trim() || null;
-      const proxy = document.getElementById("hordeProxy").value.trim() || null;
-      
-      if (!prompt) {
-        updateStatus("⚠️ Please enter a prompt to generate images.", "error");
-        return;
-      }
-      
-      const [w, h] = aspectToSize(aspect);
-      updateStatus("🎨 Generating your images... This may take a moment.", "working");
-      document.getElementById("go").disabled = true;
-      
-      try {
-        let items = [];
-        
-        if (provider === "pollinations") {
-          items = pollinationsUrls(prompt, count, w, h, seed).map(u => ({ provider: "pollinations", url: u }));
-        } else if (provider === "test_images") {
-          items = testImagesGenerate(prompt, count, w, h, seed);
-          console.log("Test images generated:", items);
-        } else if (provider === "unsplash") {
-          items = unsplashGenerate(prompt, count, w, h, seed);
-          console.log("Unsplash generated items:", items);
-        } else if (provider === "stable_horde") {
-          console.log("Starting Stable Horde generation...");
-          for (let i = 0; i < count; i++) {
-            try {
-              console.log(`Generating image ${i + 1}/${count}...`);
-              const id = await hordeSubmit(prompt, w, h, Number.isInteger(seed) ? seed + i : null, hordeKey, proxy, "stable_diffusion");
-              console.log("Got job ID:", id);
-              const status = await hordePoll(id, hordeKey, proxy);
-              console.log("Got status:", status);
-              const gen = status.generations.find(g => g.img);
-              if (gen && gen.img) {
-                items.push({ provider: "stable_horde", b64: gen.img });
-                console.log(`Successfully generated image ${i + 1}`);
-              } else {
-                console.warn(`No image data in generation ${i + 1}`);
-              }
-            } catch (e) {
-              console.error(`Horde generation ${i + 1} failed:`, e);
-            }
-          }
-        } else if (provider === "stable_horde_dreamshaper") {
-          for (let i = 0; i < count; i++) {
-            try {
-              const id = await hordeSubmit(prompt, w, h, Number.isInteger(seed) ? seed + i : null, hordeKey, proxy, "dreamshaper");
-              const status = await hordePoll(id, hordeKey, proxy);
-              const gen = status.generations.find(g => g.img);
-              if (gen && gen.img) items.push({ provider: "stable_horde_dreamshaper", b64: gen.img });
-            } catch (e) {
-              console.warn(`DreamShaper generation ${i + 1} failed:`, e);
-            }
-          }
-        } else if (provider === "stable_horde_realistic") {
-          for (let i = 0; i < count; i++) {
-            try {
-              const id = await hordeSubmit(prompt, w, h, Number.isInteger(seed) ? seed + i : null, hordeKey, proxy, "realistic_vision");
-              const status = await hordePoll(id, hordeKey, proxy);
-              const gen = status.generations.find(g => g.img);
-              if (gen && gen.img) items.push({ provider: "stable_horde_realistic", b64: gen.img });
-            } catch (e) {
-              console.warn(`Realistic Vision generation ${i + 1} failed:`, e);
-            }
-          }
-        } else if (provider === "stable_horde_anime") {
-          for (let i = 0; i < count; i++) {
-            try {
-              const id = await hordeSubmit(prompt, w, h, Number.isInteger(seed) ? seed + i : null, hordeKey, proxy, "anime");
-              const status = await hordePoll(id, hordeKey, proxy);
-              const gen = status.generations.find(g => g.img);
-              if (gen && gen.img) items.push({ provider: "stable_horde_anime", b64: gen.img });
-            } catch (e) {
-              console.warn(`Anime generation ${i + 1} failed:`, e);
-            }
-          }
-        } else if (provider === "one_each") {
-          // Try multiple AI providers for variety
-          const providers = [
-            { name: "pollinations", func: () => pollinationsUrls(prompt, 1, w, h, seed).map(u => ({ provider: "pollinations", url: u })) },
-            { name: "unsplash", func: () => unsplashGenerate(prompt, 1, w, h, seed) },
-            { name: "stable_horde", func: async () => {
-              try {
-                const id = await hordeSubmit(prompt, w, h, seed, hordeKey, proxy, "stable_diffusion");
-                const status = await hordePoll(id, hordeKey, proxy);
-                const gen = status.generations.find(g => g.img);
-                return gen && gen.img ? [{ provider: "stable_horde", b64: gen.img }] : [];
-              } catch (e) {
-                console.warn("Horde failed:", e);
-                return [];
-              }
-            }},
-            { name: "dreamshaper", func: async () => {
-              try {
-                const id = await hordeSubmit(prompt, w, h, seed, hordeKey, proxy, "dreamshaper");
-                const status = await hordePoll(id, hordeKey, proxy);
-                const gen = status.generations.find(g => g.img);
-                return gen && gen.img ? [{ provider: "stable_horde_dreamshaper", b64: gen.img }] : [];
-              } catch (e) {
-                console.warn("DreamShaper failed:", e);
-                return [];
-              }
-            }},
-            { name: "realistic_vision", func: async () => {
-              try {
-                const id = await hordeSubmit(prompt, w, h, seed, hordeKey, proxy, "realistic_vision");
-                const status = await hordePoll(id, hordeKey, proxy);
-                const gen = status.generations.find(g => g.img);
-                return gen && gen.img ? [{ provider: "stable_horde_realistic", b64: gen.img }] : [];
-              } catch (e) {
-                console.warn("Realistic Vision failed:", e);
-                return [];
-              }
-            }}
-          ];
-          
-          // Try each provider until we have enough images
-          for (let i = 0; i < providers.length && items.length < count; i++) {
-            try {
-              const providerResults = await providers[i].func();
-              items.push(...providerResults.slice(0, count - items.length));
-            } catch (e) {
-              console.warn(`${providers[i].name} failed:`, e);
-            }
-          }
-          
-          // Fill remaining with Pollinations if needed
-          while (items.length < count) {
-            const s = Number.isInteger(seed) ? seed + items.length : null;
-            items.push({ provider: "pollinations", url: pollinationsUrls(prompt, 1, w, h, s)[0] });
-          }
-        } else {
-          try {
-            for (let i = 0; i < count; i++) {
-              try {
-                const id = await hordeSubmit(prompt, w, h, Number.isInteger(seed) ? seed + i : null, hordeKey, proxy);
-                const status = await hordePoll(id, hordeKey, proxy);
-                const gen = status.generations.find(g => g.img);
-                if (gen && gen.img) items.push({ provider: "stable_horde", b64: gen.img });
-              } catch (e) {
-                console.warn(`Horde generation ${i + 1} failed, will use Pollinations:`, e);
-                break;
-              }
-            }
-          } catch (e) {
-            console.warn("Horde failed, using Pollinations:", e);
-          }
-          
-          if (items.length < count) {
-            const needed = count - items.length;
-            const start = Number.isInteger(seed) ? seed + items.length : null;
-            const urls = pollinationsUrls(prompt, needed, w, h, start);
-            items.push(...urls.map(u => ({ provider: "pollinations", url: u })));
-          }
-        }
-        
-        render(items);
-        updateStatus(`✅ Generated ${items.length} image${items.length !== 1 ? 's' : ''} successfully!`, "success");
-      } catch (e) {
-        console.error(e);
-        updateStatus(`❌ Error: ${e.message || e}`, "error");
-      } finally {
-        document.getElementById("go").disabled = false;
-      }
-    }
   </script>
 </body>
 </html>
