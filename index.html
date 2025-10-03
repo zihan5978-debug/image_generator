@@ -477,11 +477,12 @@
             <select id="provider">
               <option value="auto" selected>🚀 Auto (Best Quality)</option>
               <option value="pollinations">🌸 Pollinations (Fast)</option>
+              <option value="test_images">🧪 Test Images (Working)</option>
+              <option value="unsplash">📷 Unsplash (Photos)</option>
               <option value="stable_horde">🎯 Stable Horde (SD 1.5)</option>
               <option value="stable_horde_dreamshaper">🎨 Stable Horde (DreamShaper)</option>
               <option value="stable_horde_realistic">📸 Stable Horde (Realistic Vision)</option>
               <option value="stable_horde_anime">🎌 Stable Horde (Anime)</option>
-              <option value="unsplash">📷 Unsplash (Photos)</option>
               <option value="one_each">🔄 One from Each</option>
             </select>
           </div>
@@ -765,6 +766,26 @@
       return Array.from({length: count}, (_, i) => `${base}&seed=${startSeed + i}`);
     }
 
+    // Test Images - Simple working images for testing
+    function testImagesGenerate(prompt, count, width, height, seed) {
+      const items = [];
+      const colors = ['FF6B6B', '4ECDC4', '45B7D1', '96CEB4', 'FFEAA7', 'DDA0DD', '98D8C8', 'F7DC6F'];
+      const startSeed = Number.isInteger(seed) ? seed : Date.now();
+      
+      for (let i = 0; i < count; i++) {
+        const colorIndex = (startSeed + i) % colors.length;
+        const bgColor = colors[colorIndex];
+        const textColor = 'FFFFFF';
+        const text = encodeURIComponent(prompt.substring(0, 15)); // First 15 chars of prompt
+        
+        items.push({
+          provider: "test_images",
+          url: `https://via.placeholder.com/${width}x${height}/${bgColor}/${textColor}?text=${text}`
+        });
+      }
+      return items;
+    }
+
     // Unsplash - High quality photos based on prompt
     function unsplashGenerate(prompt, count, width, height, seed) {
       const items = [];
@@ -930,17 +951,30 @@
         
         if (provider === "pollinations") {
           items = pollinationsUrls(prompt, count, w, h, seed).map(u => ({ provider: "pollinations", url: u }));
+        } else if (provider === "test_images") {
+          items = testImagesGenerate(prompt, count, w, h, seed);
+          console.log("Test images generated:", items);
         } else if (provider === "unsplash") {
           items = unsplashGenerate(prompt, count, w, h, seed);
+          console.log("Unsplash generated items:", items);
         } else if (provider === "stable_horde") {
+          console.log("Starting Stable Horde generation...");
           for (let i = 0; i < count; i++) {
             try {
+              console.log(`Generating image ${i + 1}/${count}...`);
               const id = await hordeSubmit(prompt, w, h, Number.isInteger(seed) ? seed + i : null, hordeKey, proxy, "stable_diffusion");
+              console.log("Got job ID:", id);
               const status = await hordePoll(id, hordeKey, proxy);
+              console.log("Got status:", status);
               const gen = status.generations.find(g => g.img);
-              if (gen && gen.img) items.push({ provider: "stable_horde", b64: gen.img });
+              if (gen && gen.img) {
+                items.push({ provider: "stable_horde", b64: gen.img });
+                console.log(`Successfully generated image ${i + 1}`);
+              } else {
+                console.warn(`No image data in generation ${i + 1}`);
+              }
             } catch (e) {
-              console.warn(`Horde generation ${i + 1} failed:`, e);
+              console.error(`Horde generation ${i + 1} failed:`, e);
             }
           }
         } else if (provider === "stable_horde_dreamshaper") {
