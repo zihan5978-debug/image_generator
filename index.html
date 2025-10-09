@@ -8,13 +8,14 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
-    
+
     body { 
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -23,52 +24,51 @@
       align-items: center;
       justify-content: center;
     }
-    
-    /* Authentication Styles */
-    .auth-container {
+
+    .container {
       background: white;
       border-radius: 20px;
       box-shadow: 0 20px 60px rgba(0,0,0,0.2);
       overflow: hidden;
       width: 100%;
-      max-width: 450px;
+      max-width: 600px;
       margin: 20px;
     }
-    
-    .auth-header {
+
+    .header {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
       padding: 40px 30px;
       text-align: center;
     }
-    
-    .auth-header h1 {
+
+    .header h1 {
       font-size: 2.2em;
       margin-bottom: 10px;
       font-weight: 300;
     }
-    
-    .auth-header p {
+
+    .header p {
       opacity: 0.9;
       font-size: 1.1em;
     }
-    
-    .auth-content {
+
+    .content {
       padding: 40px 30px;
     }
-    
+
     .form-group {
       margin-bottom: 25px;
     }
-    
+
     .form-group label {
       display: block;
       margin-bottom: 8px;
       font-weight: 500;
       color: #333;
     }
-    
-    .form-group input {
+
+    .form-group input, .form-group select, .form-group textarea {
       width: 100%;
       padding: 15px;
       border: 2px solid #e1e5e9;
@@ -76,13 +76,13 @@
       font-size: 16px;
       transition: border-color 0.3s, box-shadow 0.3s;
     }
-    
-    .form-group input:focus {
+
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
       outline: none;
       border-color: #667eea;
       box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
     }
-    
+
     .btn {
       width: 100%;
       padding: 15px;
@@ -95,30 +95,30 @@
       cursor: pointer;
       transition: transform 0.2s, box-shadow 0.2s;
     }
-    
+
     .btn:hover {
       transform: translateY(-2px);
       box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
     }
-    
+
     .btn:disabled {
       opacity: 0.6;
       cursor: not-allowed;
       transform: none;
     }
-    
+
     .btn-secondary {
       background: #6c757d;
       margin-top: 10px;
     }
-    
-    .btn-code {
+
+    .btn-small {
       width: auto;
       padding: 10px 20px;
-      margin-left: 10px;
       font-size: 14px;
+      margin: 5px;
     }
-    
+
     .message {
       padding: 12px;
       border-radius: 8px;
@@ -126,67 +126,55 @@
       text-align: center;
       font-weight: 500;
     }
-    
+
     .message.error {
       background: #ffebee;
       color: #c62828;
       border: 1px solid #ffcdd2;
     }
-    
+
     .message.success {
       background: #e8f5e8;
       color: #2e7d32;
       border: 1px solid #c8e6c9;
     }
-    
+
     .message.info {
       background: #e3f2fd;
       color: #1976d2;
       border: 1px solid #bbdefb;
     }
-    
+
     .switch-link {
       text-align: center;
       margin-top: 25px;
-      padding-top: 25px;
-      border-top: 1px solid #e1e5e9;
     }
-    
+
     .switch-link a {
       color: #667eea;
       text-decoration: none;
       font-weight: 500;
     }
-    
+
     .switch-link a:hover {
       text-decoration: underline;
     }
-    
-    .code-input-group {
-      display: flex;
-      align-items: center;
-    }
-    
-    .code-input-group input {
-      flex: 1;
-    }
-    
+
     .hidden {
       display: none !important;
     }
-    
-    /* Main App Styles */
+
     .main-app {
       display: none;
       min-height: 100vh;
       width: 100%;
       background: #f8f9fa;
     }
-    
+
     .main-app.show {
       display: block;
     }
-    
+
     .app-header {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
@@ -196,33 +184,32 @@
       align-items: center;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
-    
+
     .app-header h1 {
       font-size: 1.8em;
       font-weight: 300;
     }
-    
-    .logout-btn, .nav-btn {
+
+    .nav-btn {
       padding: 10px 20px;
       background: rgba(255,255,255,0.2);
       border: 1px solid rgba(255,255,255,0.3);
       color: white;
       border-radius: 8px;
       cursor: pointer;
-      transition: background-color 0.2s;
       margin-left: 10px;
     }
-    
-    .logout-btn:hover, .nav-btn:hover {
+
+    .nav-btn:hover {
       background: rgba(255,255,255,0.3);
     }
-    
+
     .app-content {
       max-width: 1200px;
       margin: 0 auto;
       padding: 30px 20px;
     }
-    
+
     .controls {
       background: white;
       border-radius: 15px;
@@ -230,171 +217,110 @@
       box-shadow: 0 5px 20px rgba(0,0,0,0.1);
       margin-bottom: 30px;
     }
-    
-    .row { 
-      display: flex; 
-      gap: 20px; 
-      flex-wrap: wrap; 
-      margin-bottom: 25px; 
+
+    .row {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-bottom: 25px;
       align-items: end;
     }
-    
+
     .row > * {
       flex: 1;
       min-width: 200px;
     }
-    
-    .controls input, .controls select, .controls button { 
-      padding: 12px; 
-      font-size: 14px; 
-      border: 2px solid #e1e5e9;
-      border-radius: 8px;
-      transition: border-color 0.3s;
-    }
-    
-    .controls input:focus, .controls select:focus {
-      outline: none;
-      border-color: #667eea;
-    }
-    
-    .controls label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 500;
-      color: #333;
-    }
-    
+
     .generate-btn {
       background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-      color: white;
-      border: none;
-      padding: 15px 30px;
-      font-size: 16px;
-      font-weight: 500;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
     }
-    
-    .generate-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(17, 153, 142, 0.4);
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
     }
-    
-    .generate-btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none;
-    }
-    
-    .grid { 
-      display: grid; 
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
-      gap: 20px; 
-    }
-    
-    .card { 
+
+    .card {
       background: white;
-      border-radius: 12px; 
-      padding: 15px; 
+      border-radius: 12px;
+      padding: 15px;
       box-shadow: 0 5px 20px rgba(0,0,0,0.1);
       transition: transform 0.2s, box-shadow 0.2s;
     }
-    
+
     .card:hover {
       transform: translateY(-5px);
       box-shadow: 0 10px 30px rgba(0,0,0,0.15);
     }
-    
-    .card img { 
-      width: 100%; 
-      height: auto; 
-      display: block; 
-      border-radius: 8px; 
+
+    .card img {
+      width: 100%;
+      height: auto;
+      border-radius: 8px;
       margin-bottom: 10px;
     }
-    
-    .badge { 
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+
+    .badge {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
-      padding: 5px 12px; 
-      border-radius: 20px; 
-      font-size: 12px; 
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 12px;
       font-weight: 500;
       display: inline-block;
       margin-bottom: 10px;
     }
-    
-    #status { 
-      margin: 15px 0; 
+
+    .status {
+      margin: 15px 0;
       padding: 12px;
       border-radius: 8px;
       font-weight: 500;
     }
-    
+
     .status-working {
       background: #e3f2fd;
       color: #1976d2;
       border: 1px solid #bbdefb;
     }
-    
+
     .status-success {
       background: #e8f5e8;
       color: #2e7d32;
       border: 1px solid #c8e6c9;
     }
-    
+
     .status-error {
       background: #ffebee;
       color: #c62828;
       border: 1px solid #ffcdd2;
     }
-    
-    .template-checkboxes {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 15px;
+
+    .template-list {
       margin-bottom: 20px;
     }
-    
-    .template-checkboxes label {
-      display: flex;
-      align-items: center;
-      gap: 5px;
+
+    .template-list label {
+      display: block;
+      margin-bottom: 10px;
     }
-    
-    .image-feedback {
-      display: flex;
-      gap: 10px;
-      margin-top: 10px;
-    }
-    
-    .image-feedback button {
-      flex: 1;
-      padding: 10px;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    
+
     @media (max-width: 768px) {
       .row {
         flex-direction: column;
       }
-      
+
       .row > * {
         min-width: unset;
       }
-      
+
       .app-header {
         flex-direction: column;
         gap: 15px;
         text-align: center;
       }
-      
-      .controls {
-        padding: 20px;
-      }
-      
+
       .grid {
         grid-template-columns: 1fr;
       }
@@ -403,13 +329,13 @@
 </head>
 <body>
   <!-- Authentication Container -->
-  <div id="auth-container" class="auth-container">
-    <div class="auth-header">
+  <div id="auth-container" class="container">
+    <div class="header">
       <h1>🎨 AI Design Generator</h1>
       <p>Create stunning images with AI</p>
     </div>
-    
-    <div class="auth-content">
+
+    <div class="content">
       <!-- Login Form -->
       <form id="login-form">
         <div class="form-group">
@@ -422,84 +348,32 @@
         </div>
         <button type="submit" class="btn">Sign In</button>
         <div id="login-msg" class="message" style="display: none;"></div>
+        <div class="switch-link">
+          <a href="#" onclick="resetPassword()">Forgot password?</a>
+        </div>
       </form>
-      
+
       <!-- Registration Form -->
       <form id="register-form" class="hidden">
-        <!-- Step 1: Email and Industry Code -->
-        <div id="register-step1">
-          <div class="form-group">
-            <label for="register-email">Email Address</label>
-            <input id="register-email" type="email" required autocomplete="username" placeholder="Enter your email">
-          </div>
-          <div class="form-group">
-            <label for="register-industry-code">Industry Code</label>
-            <input id="register-industry-code" type="text" required placeholder="Enter industry code">
-          </div>
-          <div class="code-input-group">
-            <button type="button" id="send-code-btn" class="btn btn-code">Send Code</button>
-          </div>
-          <div id="register-msg-step1" class="message" style="display: none;"></div>
+        <div class="form-group">
+          <label for="register-email">Email Address</label>
+          <input id="register-email" type="email" required autocomplete="username" placeholder="Enter your email">
         </div>
-        
-        <!-- Step 2: Verification -->
-        <div id="register-step2" class="hidden">
-          <div class="form-group">
-            <label for="register-code">Verification Code</label>
-            <input id="register-code" type="text" required placeholder="Enter 6-digit code">
-          </div>
-          <button type="button" id="verify-code-btn" class="btn">Verify Code</button>
-          <button type="button" id="back-to-step1" class="btn btn-secondary">Back</button>
-          <div id="register-msg-step2" class="message" style="display: none;"></div>
+        <div class="form-group">
+          <label for="register-password">Password</label>
+          <input id="register-password" type="password" required autocomplete="new-password" placeholder="Create a password">
         </div>
-        
-        <!-- Step 3: Complete Registration -->
-        <div id="register-step3" class="hidden">
-          <div class="form-group">
-            <label for="register-password">Password</label>
-            <input id="register-password" type="password" required autocomplete="new-password" placeholder="Create a password">
-          </div>
-          <div class="form-group">
-            <label for="register-password2">Confirm Password</label>
-            <input id="register-password2" type="password" required autocomplete="new-password" placeholder="Confirm your password">
-          </div>
-          <div class="form-group">
-            <label for="register-name">Full Name</label>
-            <input id="register-name" type="text" required placeholder="Enter your full name">
-          </div>
-          <button type="submit" class="btn">Create Account</button>
-          <button type="button" id="back-to-step2" class="btn btn-secondary">Back</button>
-          <div id="register-msg-step3" class="message" style="display: none;"></div>
+        <div class="form-group">
+          <label for="register-code">Industry Code</label>
+          <input id="register-code" type="text" required placeholder="Enter industry code (e.g., 000000 for master)">
         </div>
+        <button type="submit" class="btn">Create Account</button>
+        <div id="register-msg" class="message" style="display: none;"></div>
       </form>
-      
+
       <div class="switch-link">
         <span id="switch-to-register">Don't have an account? <a href="#" onclick="showRegister(); return false;">Sign up</a></span>
         <span id="switch-to-login" class="hidden">Already have an account? <a href="#" onclick="showLogin(); return false;">Sign in</a></span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Setup Page -->
-  <div id="setup-page" class="main-app hidden">
-    <div class="app-header">
-      <h1>Setup Your Profile</h1>
-      <button id="setup-logout-btn" class="logout-btn">Logout</button>
-    </div>
-    <div class="app-content">
-      <div class="controls">
-        <form id="setup-form">
-          <div class="form-group">
-            <label for="setup-name">Full Name</label>
-            <input id="setup-name" type="text" required placeholder="Enter your full name">
-          </div>
-          <div class="form-group">
-            <label for="setup-phone">Phone Number (Optional)</label>
-            <input id="setup-phone" type="tel" placeholder="Enter your phone number">
-          </div>
-          <button type="submit" class="btn">Save Profile</button>
-          <div id="setup-msg" class="message" style="display: none;"></div>
-        </form>
       </div>
     </div>
   </div>
@@ -509,81 +383,133 @@
     <div class="app-header">
       <h1>🎨 AI Design Generator</h1>
       <div>
+        <button id="setup-btn" class="nav-btn">Setup</button>
         <button id="account-btn" class="nav-btn">Account</button>
-        <button id="templates-btn" class="nav-btn">Templates</button>
+        <button id="template-btn" class="nav-btn">Templates</button>
         <button id="records-btn" class="nav-btn">Past Records</button>
-        <button id="logout-btn" class="logout-btn">Logout</button>
+        <button id="master-btn" class="nav-btn hidden">Master Controls</button>
+        <button id="logout-btn" class="nav-btn">Logout</button>
       </div>
     </div>
-    
+
     <div class="app-content">
+      <!-- Setup Page -->
+      <div id="setup-page" class="controls hidden">
+        <h2>Setup Your Profile</h2>
+        <form id="setup-form">
+          <div class="form-group">
+            <label for="setup-name">Full Name</label>
+            <input id="setup-name" type="text" required placeholder="Enter your full name">
+          </div>
+          <div class="form-group">
+            <label for="setup-details">Additional Details</label>
+            <textarea id="setup-details" placeholder="Optional details"></textarea>
+          </div>
+          <button type="submit" class="btn">Save Profile</button>
+          <div id="setup-msg" class="message" style="display: none;"></div>
+        </form>
+      </div>
+
       <!-- Account Page -->
-      <div id="account-page" class="hidden">
-        <div class="controls">
-          <h2>Account Information</h2>
-          <form id="account-form">
-            <div class="form-group">
-              <label for="account-name">Full Name</label>
-              <input id="account-name" type="text" required placeholder="Enter your full name">
-            </div>
-            <div class="form-group">
-              <label for="account-phone">Phone Number (Optional)</label>
-              <input id="account-phone" type="tel" placeholder="Enter your phone number">
-            </div>
-            <button type="submit" class="btn">Update Profile</button>
-            <div id="account-msg" class="message" style="display: none;"></div>
-          </form>
-        </div>
+      <div id="account-page" class="controls hidden">
+        <h2>Account Information</h2>
+        <div id="account-info"></div>
+        <form id="account-form">
+          <div class="form-group">
+            <label for="account-name">Full Name</label>
+            <input id="account-name" type="text" required placeholder="Enter your full name">
+          </div>
+          <div class="form-group">
+            <label for="account-details">Additional Details</label>
+            <textarea id="account-details" placeholder="Optional details"></textarea>
+          </div>
+          <button type="submit" class="btn">Update Profile</button>
+          <div id="account-msg" class="message" style="display: none;"></div>
+        </form>
       </div>
 
       <!-- Template Page -->
-      <div id="template-page">
-        <div class="controls">
-          <h2>Select Template</h2>
-          <div id="template-checkboxes" class="template-checkboxes"></div>
-          <button id="generate-btn" class="generate-btn">✨ Generate Images</button>
-          <div id="status"></div>
+      <div id="template-page" class="controls hidden">
+        <h2>Select Template</h2>
+        <div id="template-list" class="template-list"></div>
+        <button id="generate-images" class="btn generate-btn">✨ Generate Images</button>
+        <div id="template-status" class="status"></div>
+        <div id="generated-images" class="grid"></div>
+        <div id="feedback-section" class="hidden">
+          <button id="like-first" class="btn btn-small">I like this</button>
+          <button id="like-second" class="btn btn-small">I like that</button>
+          <button id="both-bad" class="btn btn-small">Both bad</button>
         </div>
-        <div id="results" class="grid"></div>
       </div>
 
       <!-- Past Records Page -->
-      <div id="records-page" class="hidden">
-        <div class="controls">
-          <h2>Past Records</h2>
-          <div id="records-grid" class="grid"></div>
-        </div>
+      <div id="records-page" class="controls hidden">
+        <h2>Past Records</h2>
+        <div id="records-list" class="grid"></div>
       </div>
-    </div>
-  </div>
 
-  <!-- Master Dashboard -->
-  <div id="master-dashboard" class="main-app hidden">
-    <div class="app-header">
-      <h1>Master Dashboard</h1>
-      <button id="master-logout-btn" class="logout-btn">Logout</button>
-    </div>
-    <div class="app-content">
-      <div class="controls">
-        <h2>Manage Templates</h2>
-        <form id="template-form">
-          <div class="form-group">
-            <label for="template-name">Template Name</label>
-            <input id="template-name" type="text" required placeholder="Enter template name">
-          </div>
-          <div class="form-group">
-            <label for="template-description">Description</label>
-            <input id="template-description" type="text" required placeholder="Enter template description">
-          </div>
-          <button type="submit" class="btn">Add Template</button>
-        </form>
-        <div id="template-list" class="grid"></div>
+      <!-- Master Controls Page -->
+      <div id="master-page" class="controls hidden">
+        <h2>Master Controls</h2>
+        <div class="form-group">
+          <label for="template-name">Create New Template</label>
+          <input id="template-name" type="text" placeholder="Enter template name">
+          <label for="template-code">Industry Code (optional, auto-generate if blank)</label>
+          <input id="template-code" type="text" placeholder="Enter or generate code">
+          <button id="create-template" class="btn btn-small">Create Template</button>
+        </div>
+        <div class="form-group">
+          <label for="template-file">Upload Template File (XLSX)</label>
+          <input id="template-file" type="file" accept=".xlsx">
+          <label for="upload-code">Industry Code for all (optional, auto-generate per if blank)</label>
+          <input id="upload-code" type="text" placeholder="Enter code for all templates">
+          <button id="upload-template" class="btn btn-small">Upload Templates</button>
+        </div>
+        <div id="template-management"></div>
+        <div class="form-group">
+          <label for="industry-code">Generate Industry Code</label>
+          <input id="industry-code" type="text" readonly>
+          <button id="generate-code" class="btn btn-small">Generate Code</button>
+        </div>
+        <div id="approve-requests"></div>
+        <div id="manage-users"></div>
         <div id="master-msg" class="message" style="display: none;"></div>
       </div>
     </div>
   </div>
 
   <script>
+    // Important: To fix "Missing or insufficient permissions" error, set the following Firestore security rules in your Firebase Console (Firestore Database > Rules tab):
+    // rules_version = '2';
+    // service cloud.firestore {
+    //   match /databases/{database}/documents {
+    //     match /users/{userId} {
+    //       allow read: if request.auth != null && request.auth.uid == userId;
+    //       allow create: if request.auth != null && request.auth.uid == userId;
+    //       allow update: if request.auth != null && (request.auth.uid == userId || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'master');
+    //     }
+    //     match /templates/{templateId} {
+    //       allow read: if request.auth != null;
+    //       allow create, update, delete: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'master';
+    //     }
+    //     match /generations/{generationId} {
+    //       allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+    //       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    //       allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+    //     }
+    //     match /profileRequests/{reqId} {
+    //       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    //       allow read: if request.auth != null && (resource.data.userId == request.auth.uid || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'master');
+    //       allow update: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'master';
+    //     }
+    //   }
+    // }
+
+    // EmailJS Configuration (unused but kept for potential future use)
+    const EMAILJS_SERVICE_ID = 'service_ghvr7ui';
+    const EMAILJS_TEMPLATE_ID = 'template_x4lt4dk';
+    emailjs.init('gtluK1AW_Y5bE9mVp');
+
     // Firebase Configuration
     const firebaseConfig = {
       apiKey: "AIzaSyBtF_37PsX1ItQobFZkOVSMUEio2NPmdoM",
@@ -598,19 +524,49 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // EmailJS Configuration
-    const EMAILJS_SERVICE_ID = 'service_ghvr7ui';
-    const EMAILJS_TEMPLATE_ID = 'template_x4lt4dk';
-    emailjs.init('gtluK1AW_Y5bE9mVp');
-
     // Global state
     let currentUser = null;
     let userRole = null;
-    let userData = null;
-    let selectedTemplate = null;
-    let generationCount = 0;
-    const MAX_GENERATIONS = 20;
-    let pastRecords = [];
+    let userData = {};
+    let bothBadCount = 0;
+    const MAX_BOTH_BAD = 20;
+    const MASTER_EMAIL = 'langtechgroup5@gmail.com';
+
+    // XLSX Processing
+    function filledCell(cell) {
+      return cell !== '' && cell != null;
+    }
+
+    async function processXlsxFile(file) {
+      try {
+        const reader = new FileReader();
+        return new Promise((resolve, reject) => {
+          reader.onload = function(e) {
+            try {
+              const data = e.target.result.split(',')[1]; // Get base64 data
+              const workbook = XLSX.read(data, { type: 'base64' });
+              const firstSheetName = workbook.SheetNames[0];
+              const worksheet = workbook.Sheets[firstSheetName];
+              const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+              const filteredData = jsonData.filter(row => row.some(filledCell));
+              const headerRowIndex = filteredData.findIndex((row, index) =>
+                row.filter(filledCell).length >= (filteredData[index + 1]?.filter(filledCell).length || 0)
+              );
+              const startIndex = headerRowIndex === -1 || headerRowIndex > 25 ? 0 : headerRowIndex;
+              const templates = filteredData.slice(startIndex).map(row => row[0]?.toString().trim()).filter(name => name);
+              resolve(templates);
+            } catch (err) {
+              reject(err);
+            }
+          };
+          reader.onerror = () => reject(new Error('File reading failed'));
+          reader.readAsDataURL(file);
+        });
+      } catch (err) {
+        console.error('XLSX processing error:', err);
+        throw err;
+      }
+    }
 
     // UI Helper Functions
     function showElement(id) {
@@ -650,281 +606,446 @@
       showElement('register-form');
       hideElement('switch-to-register');
       showElement('switch-to-login');
-      showElement('register-step1');
-      hideElement('register-step2');
-      hideElement('register-step3');
       document.getElementById('register-form').reset();
-      hideMessage('register-msg-step1');
-      hideMessage('register-msg-step2');
-      hideMessage('register-msg-step3');
+      hideMessage('register-msg');
     }
 
-    function showSetupPage() {
-      hideElement('auth-container');
-      hideElement('main-app');
-      hideElement('master-dashboard');
-      showElement('setup-page');
+    function showPage(pageId) {
+      ['setup-page', 'account-page', 'template-page', 'records-page', 'master-page'].forEach(id => {
+        if (id === pageId) showElement(id);
+        else hideElement(id);
+      });
     }
 
     function showMainApp() {
-      hideElement('auth-container');
-      hideElement('setup-page');
-      hideElement('master-dashboard');
-      showElement('main-app');
-      showElement('template-page');
-      hideElement('account-page');
-      hideElement('records-page');
-    }
-
-    function showMasterDashboard() {
-      hideElement('auth-container');
-      hideElement('setup-page');
-      hideElement('main-app');
-      showElement('master-dashboard');
+      document.getElementById('auth-container').style.display = 'none';
+      document.getElementById('main-app').classList.add('show');
+      if (userRole === 'master') showElement('master-btn');
+      if (!userData.name) showPage('setup-page');
+      else showPage('template-page');
     }
 
     function showAuth() {
-      showElement('auth-container');
-      hideElement('setup-page');
-      hideElement('main-app');
-      hideElement('master-dashboard');
+      document.getElementById('auth-container').style.display = 'block';
+      document.getElementById('main-app').classList.remove('show');
       showLogin();
     }
 
     // Authentication Functions
     async function handleLogin(email, password) {
       try {
+        console.log('Attempting login with email:', email);
         showMessage('login-msg', 'Signing in...', 'info');
         const result = await auth.signInWithEmailAndPassword(email, password);
         currentUser = result.user;
+        console.log('Login successful, UID:', currentUser.uid);
         await loadUserData();
+        console.log('User role:', userRole, 'User data:', userData);
         hideMessage('login-msg');
-        if (!userData || !userData.name) {
-          showSetupPage();
-        } else if (userRole === 'master') {
-          showMasterDashboard();
-        } else {
-          showMainApp();
-          loadTemplates();
-        }
+        showMainApp();
       } catch (err) {
-        showMessage('login-msg', err.message, 'error');
+        console.error('Login error:', err.code, err.message);
+        let message = 'Login failed. Please check your credentials.';
+        if (err.code === 'auth/user-not-found') {
+          message = 'No account found with this email. Please sign up.';
+        } else if (err.code === 'auth/wrong-password') {
+          message = 'Incorrect password. Try again.';
+        } else if (err.code === 'auth/invalid-login-credentials') {
+          message = 'Invalid login credentials. Check your email and password.';
+        } else if (err.code === 'auth/invalid-email') {
+          message = 'Invalid email format.';
+        }
+        showMessage('login-msg', message, 'error');
       }
     }
 
-    async function handleLogout() {
-      await auth.signOut();
-      currentUser = null;
-      userRole = null;
-      userData = null;
-      selectedTemplate = null;
-      generationCount = 0;
-      pastRecords = [];
-      showAuth();
+    async function handleRegister(email, password, code) {
+      try {
+        showMessage('register-msg', 'Creating account...', 'info');
+        // Allow master registration with '000000' even if templates collection is empty
+        if (code !== '000000') {
+          const templateDoc = await db.collection('templates').where('code', '==', code).get();
+          if (templateDoc.empty) {
+            showMessage('register-msg', 'Invalid industry code.', 'error');
+            return;
+          }
+        }
+        const result = await auth.createUserWithEmailAndPassword(email, password);
+        currentUser = result.user;
+        console.log('User created with UID:', currentUser.uid);
+        const role = code === '000000' ? 'master' : 'client';
+        await db.collection('users').doc(currentUser.uid).set({
+          email,
+          role,
+          industryCode: code,
+          name: '',
+          details: '',
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        console.log('User data written to Firestore');
+        userRole = role;
+        userData = { email, role, industryCode: code, name: '', details: '' };
+        showMessage('register-msg', 'Account created successfully!', 'success');
+        setTimeout(() => showMainApp(), 1000);
+      } catch (err) {
+        console.error('Registration error:', err);
+        showMessage('register-msg', err.message, 'error');
+      }
     }
 
-    // User Data Functions
+    function resetPassword() {
+      const email = document.getElementById('login-email').value;
+      if (email) {
+        auth.sendPasswordResetEmail(email)
+          .then(() => showMessage('login-msg', 'Password reset email sent! Check your inbox.', 'success'))
+          .catch(err => showMessage('login-msg', 'Error sending reset email: ' + err.message, 'error'));
+      } else {
+        showMessage('login-msg', 'Please enter your email to reset password.', 'error');
+      }
+    }
+
     async function loadUserData() {
       if (!currentUser) return;
-      const userDoc = await db.collection('users').doc(currentUser.uid).get();
-      if (userDoc.exists) {
-        userData = userDoc.data();
-        userRole = userData.role || 'client';
-      } else {
+      try {
+        const doc = await db.collection('users').doc(currentUser.uid).get();
+        if (doc.exists) {
+          userData = doc.data();
+          userRole = userData.role || 'client'; // Default to client if role missing
+          // Auto-fix master role if industryCode is '000000' or email is master
+          if ((userData.industryCode === '000000' || userData.email === MASTER_EMAIL) && userRole !== 'master') {
+            userRole = 'master';
+            await db.collection('users').doc(currentUser.uid).update({ role: 'master' });
+            console.log('Auto-fixed role to master');
+          }
+          console.log('User data loaded:', userData);
+        } else {
+          console.warn('No user data found for UID:', currentUser.uid);
+          showMessage('login-msg', 'User data not found. Please register or contact support.', 'error');
+        }
+      } catch (err) {
+        console.error('Error loading user data:', err);
+        showMessage('login-msg', 'Error loading user data: ' + err.message, 'error');
+      }
+    }
+
+    function handleLogout() {
+      auth.signOut().then(() => {
+        currentUser = null;
+        userRole = null;
         userData = {};
-        userRole = 'client';
-      }
+        bothBadCount = 0;
+        showAuth();
+      }).catch(err => {
+        console.error('Logout error:', err);
+        showMessage('login-msg', 'Logout failed: ' + err.message, 'error');
+      });
     }
 
-    async function saveUserData(data) {
-      await db.collection('users').doc(currentUser.uid).set(data, { merge: true });
-      userData = { ...userData, ...data };
-    }
-
-    // Registration Functions
-    async function sendVerificationCode() {
-      const email = document.getElementById('register-email').value.trim();
-      const industryCode = document.getElementById('register-industry-code').value.trim();
-      if (!email || !industryCode) {
-        showMessage('register-msg-step1', 'Please enter both email and industry code.', 'error');
-        return;
-      }
-
-      // Verify industry code
-      const codeDoc = await db.collection('industryCodes').doc(industryCode).get();
-      if (!codeDoc.exists) {
-        showMessage('register-msg-step1', 'Invalid industry code.', 'error');
-        return;
-      }
-
-      window._registerCode = Math.floor(100000 + Math.random() * 900000).toString();
-      window._registerEmail = email;
-      window._industryCode = industryCode;
-
-      try {
-        showMessage('register-msg-step1', 'Sending verification code...', 'info');
-        await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-          email: email,
-          code: window._registerCode
-        });
-        showMessage('register-msg-step1', 'Verification code sent to your email!', 'success');
-        hideElement('register-step1');
-        showElement('register-step2');
-      } catch (err) {
-        showMessage('register-msg-step1', 'Failed to send email: ' + (err.text || err.message), 'error');
-      }
-    }
-
-    function verifyCode() {
-      const code = document.getElementById('register-code').value.trim();
-      if (code === window._registerCode) {
-        hideMessage('register-msg-step2');
-        hideElement('register-step2');
-        showElement('register-step3');
-      } else {
-        showMessage('register-msg-step2', 'Incorrect verification code.', 'error');
-      }
-    }
-
-    async function completeRegistration() {
-      const password = document.getElementById('register-password').value;
-      const password2 = document.getElementById('register-password2').value;
-      const name = document.getElementById('register-name').value;
-
-      if (password !== password2) {
-        showMessage('register-msg-step3', 'Passwords do not match.', 'error');
-        return;
-      }
-
-      if (password.length < 6) {
-        showMessage('register-msg-step3', 'Password must be at least 6 characters.', 'error');
-        return;
-      }
-
-      try {
-        showMessage('register-msg-step3', 'Creating your account...', 'info');
-        const result = await auth.createUserWithEmailAndPassword(window._registerEmail, password);
-        currentUser = result.user;
-        const codeDoc = await db.collection('industryCodes').doc(window._industryCode).get();
-        const templateIds = codeDoc.data().templateIds || [];
-        await saveUserData({
-          name,
-          role: 'client',
-          templateIds,
-          industryCode: window._industryCode
-        });
-        showMessage('register-msg-step3', 'Account created successfully!', 'success');
-        setTimeout(() => showSetupPage(), 1000);
-      } catch (err) {
-        showMessage('register-msg-step3', err.message, 'error');
-      }
-    }
-
-    // Setup Page Functions
-    async function handleSetup() {
-      const name = document.getElementById('setup-name').value.trim();
-      const phone = document.getElementById('setup-phone').value.trim();
-      if (!name) {
-        showMessage('setup-msg', 'Please enter your full name.', 'error');
-        return;
-      }
-
+    // Setup and Account Functions
+    async function handleSetup(name, details) {
       try {
         showMessage('setup-msg', 'Saving profile...', 'info');
-        await saveUserData({ name, phone });
+        await db.collection('users').doc(currentUser.uid).update({
+          name,
+          details,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        userData.name = name;
+        userData.details = details;
+        console.log('Profile saved:', { name, details });
         showMessage('setup-msg', 'Profile saved successfully!', 'success');
-        setTimeout(() => {
-          if (userRole === 'master') {
-            showMasterDashboard();
-          } else {
-            showMainApp();
-            loadTemplates();
-          }
-        }, 1000);
+        setTimeout(() => showPage('template-page'), 1000);
       } catch (err) {
-        showMessage('setup-msg', 'Error saving profile: ' + err.message, 'error');
+        console.error('Setup error:', err);
+        showMessage('setup-msg', err.message, 'error');
       }
     }
 
-    // Account Page Functions
-    async function loadAccountInfo() {
-      document.getElementById('account-name').value = userData.name || '';
-      document.getElementById('account-phone').value = userData.phone || '';
-    }
-
-    async function handleAccountUpdate() {
-      const name = document.getElementById('account-name').value.trim();
-      const phone = document.getElementById('account-phone').value.trim();
-      if (!name) {
-        showMessage('account-msg', 'Please enter your full name.', 'error');
-        return;
-      }
-
+    async function handleAccountUpdate(name, details) {
       try {
         showMessage('account-msg', 'Updating profile...', 'info');
-        await saveUserData({ name, phone });
-        showMessage('account-msg', 'Profile updated successfully!', 'success');
+        if (userRole === 'master') {
+          await db.collection('users').doc(currentUser.uid).update({
+            name,
+            details,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          userData.name = name;
+          userData.details = details;
+          console.log('Profile updated:', { name, details });
+          showMessage('account-msg', 'Profile updated successfully!', 'success');
+          renderAccountInfo();
+        } else {
+          await db.collection('profileRequests').add({
+            userId: currentUser.uid,
+            newName: name,
+            newDetails: details,
+            status: 'pending',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          showMessage('account-msg', 'Update request submitted to admin for approval.', 'info');
+        }
       } catch (err) {
-        showMessage('account-msg', 'Error updating profile: ' + err.message, 'error');
+        console.error('Account update error:', err);
+        showMessage('account-msg', err.message, 'error');
       }
     }
 
-    // Template Management Functions
+    function renderAccountInfo() {
+      const infoDiv = document.getElementById('account-info');
+      infoDiv.innerHTML = `
+        <p><strong>Email:</strong> ${userData.email || 'Not set'}</p>
+        <p><strong>Name:</strong> ${userData.name || 'Not set'}</p>
+        <p><strong>Details:</strong> ${userData.details || 'Not set'}</p>
+        <p><strong>Role:</strong> ${userRole || 'Not set'}</p>
+        <p><strong>Industry Code:</strong> ${userData.industryCode || 'Not set'}</p>
+      `;
+      document.getElementById('account-name').value = userData.name || '';
+      document.getElementById('account-details').value = userData.details || '';
+    }
+
+    // Template Functions
     async function loadTemplates() {
-      if (userRole === 'master') {
-        const templateList = document.getElementById('template-list');
-        templateList.innerHTML = '';
-        const templates = await db.collection('templates').get();
-        templates.forEach(doc => {
-          const data = doc.data();
-          const card = document.createElement('div');
-          card.className = 'card';
-          card.innerHTML = `
-            <div class="badge">${data.name}</div>
-            <p>${data.description}</p>
-            <button onclick="deleteTemplate('${doc.id}')">Delete</button>
-          `;
-          templateList.appendChild(card);
-        });
-      } else {
-        const templateCheckboxes = document.getElementById('template-checkboxes');
-        templateCheckboxes.innerHTML = '';
-        const templateIds = userData.templateIds || [];
-        for (const id of templateIds) {
-          const templateDoc = await db.collection('templates').doc(id).get();
-          if (templateDoc.exists) {
-            const data = templateDoc.data();
+      const templateList = document.getElementById('template-list');
+      templateList.innerHTML = '';
+      let templates = [];
+      try {
+        if (userRole === 'master') {
+          const snapshot = await db.collection('templates').get();
+          templates = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        } else {
+          if (!userData.industryCode) {
+            templateList.innerHTML = '<p>No industry code set for your account. Please contact admin.</p>';
+            return;
+          }
+          const snapshot = await db.collection('templates').where('code', '==', userData.industryCode).get();
+          templates = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        }
+        if (templates.length === 0) {
+          templateList.innerHTML = '<p>No templates available for your industry code.</p>';
+        } else {
+          templates.forEach(template => {
             const div = document.createElement('div');
             div.innerHTML = `
               <label>
-                <input type="radio" name="template" value="${id}" onchange="selectTemplate(this.value)">
-                ${data.name}
+                <input type="checkbox" value="${template.id}" data-name="${template.name}">
+                ${template.name} (Code: ${template.code})
               </label>
             `;
-            templateCheckboxes.appendChild(div);
-          }
+            templateList.appendChild(div);
+          });
         }
+        console.log('Templates loaded:', templates);
+      } catch (err) {
+        console.error('Error loading templates:', err);
+        updateStatus('template-status', 'Error loading templates: ' + err.message, 'error');
       }
     }
 
-    async function addTemplate() {
-      const name = document.getElementById('template-name').value.trim();
-      const description = document.getElementById('template-description').value.trim();
-      if (!name || !description) {
-        showMessage('master-msg', 'Please enter both name and description.', 'error');
+    async function generateImages() {
+      if (!currentUser) {
+        updateStatus('template-status', '⚠️ Please sign in first.', 'error');
         return;
       }
 
+      const selectedTemplates = Array.from(document.querySelectorAll('#template-list input:checked')).map(input => ({
+        id: input.value,
+        name: input.dataset.name
+      }));
+      if (selectedTemplates.length === 0) {
+        updateStatus('template-status', '⚠️ Please select at least one template.', 'error');
+        return;
+      }
+
+      const prompt = `Generate an image based on the template${selectedTemplates.length > 1 ? 's' : ''}: ${selectedTemplates.map(t => t.name).join(', ')}`;
+      const [w, h] = [768, 1024]; // Default size
+      bothBadCount = 0;
+
+      updateStatus('template-status', '🎨 Generating images...', 'working');
+      document.getElementById('generate-images').disabled = true;
+
       try {
-        showMessage('master-msg', 'Adding template...', 'info');
-        const templateRef = await db.collection('templates').add({ name, description });
-        const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-        await db.collection('industryCodes').doc(code).set({ templateIds: [templateRef.id] });
-        showMessage('master-msg', `Template added! Industry code: ${code}`, 'success');
-        document.getElementById('template-form').reset();
-        loadTemplates();
+        const items = await generateTwoImages(prompt, w, h);
+        renderGeneratedImages(items, selectedTemplates.map(t => t.id));
+        showElement('feedback-section');
+        updateStatus('template-status', '✅ Images generated successfully!', 'success');
+      } catch (e) {
+        console.error('Image generation error:', e);
+        updateStatus('template-status', `❌ Error: ${e.message || e}`, 'error');
+      } finally {
+        document.getElementById('generate-images').disabled = false;
+      }
+    }
+
+    async function generateTwoImages(prompt, width, height) {
+      const urls = pollinationsUrls(prompt, 2, width, height, Date.now());
+      return urls.map(url => ({ provider: 'pollinations', url }));
+    }
+
+    function renderGeneratedImages(items, templateIds) {
+      const container = document.getElementById('generated-images');
+      container.innerHTML = '';
+      items.forEach((item, idx) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <div class="badge">${item.provider}</div>
+          <img src="${item.url}" alt="Generated image ${idx + 1}" loading="lazy"/>
+        `;
+        container.appendChild(card);
+      });
+      saveGenerationRecord(items, templateIds);
+    }
+
+    async function saveGenerationRecord(items, templateIds) {
+      try {
+        const record = {
+          userId: currentUser.uid,
+          templateIds,
+          images: items.map(item => item.url),
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        await db.collection('generations').add(record);
+        console.log('Generation record saved:', record);
+        // Keep only the last 3 records
+        const snapshot = await db.collection('generations')
+          .where('userId', '==', currentUser.uid)
+          .orderBy('createdAt', 'desc')
+          .get();
+        const records = snapshot.docs;
+        if (records.length > 3) {
+          for (let i = 3; i < records.length; i++) {
+            await db.collection('generations').doc(records[i].id).delete();
+          }
+        }
       } catch (err) {
-        showMessage('master-msg', 'Error adding template: ' + err.message, 'error');
+        console.error('Error saving generation record:', err);
+      }
+    }
+
+    async function handleFeedback(action, items, templateIds) {
+      try {
+        if (action === 'like-first' || action === 'like-second') {
+          const index = action === 'like-first' ? 0 : 1;
+          const url = items[index].url;
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `generated-image-${Date.now()}.png`;
+          link.click();
+          updateStatus('template-status', '✅ Image downloaded!', 'success');
+          hideElement('feedback-section');
+        } else if (action === 'both-bad') {
+          if (bothBadCount >= MAX_BOTH_BAD) {
+            updateStatus('template-status', '❌ Maximum regeneration attempts reached.', 'error');
+            hideElement('feedback-section');
+            return;
+          }
+          bothBadCount++;
+          const selectedTemplates = Array.from(document.querySelectorAll('#template-list input:checked')).map(input => ({
+            id: input.value,
+            name: input.dataset.name
+          }));
+          const prompt = `Generate an image based on the template${selectedTemplates.length > 1 ? 's' : ''}: ${selectedTemplates.map(t => t.name).join(', ')}`;
+          const [w, h] = [768, 1024];
+          updateStatus('template-status', '🎨 Regenerating images...', 'working');
+          document.getElementById('generate-images').disabled = true;
+          try {
+            const newItems = await generateTwoImages(prompt, w, h);
+            renderGeneratedImages(newItems, selectedTemplates.map(t => t.id));
+            updateStatus('template-status', '✅ New images generated!', 'success');
+          } catch (e) {
+            console.error('Regeneration error:', e);
+            updateStatus('template-status', `❌ Error: ${e.message || e}`, 'error');
+          } finally {
+            document.getElementById('generate-images').disabled = false;
+          }
+        }
+      } catch (err) {
+        console.error('Feedback error:', err);
+        updateStatus('template-status', `❌ Error: ${err.message}`, 'error');
+      }
+    }
+
+    async function loadRecords() {
+      const recordsList = document.getElementById('records-list');
+      recordsList.innerHTML = '';
+      try {
+        const snapshot = await db.collection('generations')
+          .where('userId', '==', currentUser.uid)
+          .orderBy('createdAt', 'desc')
+          .limit(3)
+          .get();
+        snapshot.forEach(doc => {
+          const record = doc.data();
+          record.images.forEach((url, idx) => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+              <img src="${url}" alt="Past image ${idx + 1}" loading="lazy"/>
+              <button class="btn btn-small" onclick="downloadImage('${url}')">Download</button>
+            `;
+            recordsList.appendChild(card);
+          });
+        });
+        console.log('Records loaded:', snapshot.size);
+      } catch (err) {
+        console.error('Error loading records:', err);
+      }
+    }
+
+    function downloadImage(url) {
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `past-image-${Date.now()}.png`;
+      link.click();
+    }
+
+    // Master Functions
+    async function createTemplate(name, code) {
+      try {
+        showMessage('master-msg', 'Creating template...', 'info');
+        if (!code) code = Math.floor(100000 + Math.random() * 900000).toString();
+        await db.collection('templates').add({
+          name,
+          code,
+          createdBy: currentUser.uid,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        console.log('Template created:', { name, code });
+        showMessage('master-msg', 'Template created successfully!', 'success');
+        renderTemplateManagement();
+      } catch (err) {
+        console.error('Template creation error:', err);
+        showMessage('master-msg', err.message, 'error');
+      }
+    }
+
+    async function uploadTemplates(file, uploadCode) {
+      try {
+        showMessage('master-msg', 'Processing template file...', 'info');
+        const templates = await processXlsxFile(file);
+        if (!templates.length) {
+          showMessage('master-msg', 'No valid templates found in file.', 'error');
+          return;
+        }
+        const batch = db.batch();
+        templates.forEach(name => {
+          const templateCode = uploadCode || Math.floor(100000 + Math.random() * 900000).toString();
+          const docRef = db.collection('templates').doc();
+          batch.set(docRef, {
+            name,
+            code: templateCode,
+            createdBy: currentUser.uid,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        });
+        await batch.commit();
+        console.log('Templates uploaded:', templates);
+        showMessage('master-msg', `Successfully uploaded ${templates.length} templates!`, 'success');
+        renderTemplateManagement();
+      } catch (err) {
+        console.error('Template upload error:', err);
+        showMessage('master-msg', 'Error uploading templates: ' + err.message, 'error');
       }
     }
 
@@ -932,36 +1053,154 @@
       try {
         showMessage('master-msg', 'Deleting template...', 'info');
         await db.collection('templates').doc(templateId).delete();
-        // Remove template from all industry codes
-        const codes = await db.collection('industryCodes').get();
-        codes.forEach(async doc => {
-          const data = doc.data();
-          const templateIds = data.templateIds.filter(id => id !== templateId);
-          await db.collection('industryCodes').doc(doc.id).update({ templateIds });
-        });
+        console.log('Template deleted:', templateId);
         showMessage('master-msg', 'Template deleted successfully!', 'success');
-        loadTemplates();
+        renderTemplateManagement();
       } catch (err) {
-        showMessage('master-msg', 'Error deleting template: ' + err.message, 'error');
+        console.error('Template deletion error:', err);
+        showMessage('master-msg', err.message, 'error');
       }
     }
 
-    function selectTemplate(templateId) {
-      selectedTemplate = templateId;
+    async function generateIndustryCode() {
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      document.getElementById('industry-code').value = code;
+      showMessage('master-msg', 'Industry code generated!', 'success');
+    }
+
+    async function renderTemplateManagement() {
+      const managementDiv = document.getElementById('template-management');
+      managementDiv.innerHTML = '<h3>Manage Templates</h3>';
+      try {
+        const snapshot = await db.collection('templates').get();
+        const templates = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        if (templates.length === 0) {
+          managementDiv.innerHTML += '<p>No templates available.</p>';
+        } else {
+          templates.forEach(template => {
+            const div = document.createElement('div');
+            div.innerHTML = `
+              <p>${template.name} (Code: ${template.code})
+              <button class="btn btn-small" onclick="deleteTemplate('${template.id}')">Delete</button></p>
+            `;
+            managementDiv.appendChild(div);
+          });
+        }
+        console.log('Template management rendered:', templates);
+      } catch (err) {
+        console.error('Error rendering templates:', err);
+        showMessage('master-msg', 'Error loading templates: ' + err.message, 'error');
+      }
+    }
+
+    async function renderApproveRequests() {
+      const div = document.getElementById('approve-requests');
+      div.innerHTML = '<h3>Approve Profile Updates</h3>';
+      try {
+        const snapshot = await db.collection('profileRequests').where('status', '==', 'pending').get();
+        if (snapshot.empty) {
+          div.innerHTML += '<p>No pending requests.</p>';
+          return;
+        }
+        for (const doc of snapshot.docs) {
+          const req = doc.data();
+          const userDoc = await db.collection('users').doc(req.userId).get();
+          const user = userDoc.data();
+          const reqDiv = document.createElement('div');
+          reqDiv.innerHTML = `
+            <p>User: ${user.email}</p>
+            <p>Current Name: ${user.name}</p>
+            <p>New Name: ${req.newName}</p>
+            <p>Current Details: ${user.details}</p>
+            <p>New Details: ${req.newDetails}</p>
+            <button class="btn btn-small" onclick="approveRequest('${doc.id}', '${req.userId}')">Approve</button>
+            <button class="btn btn-small" onclick="denyRequest('${doc.id}')">Deny</button>
+          `;
+          div.appendChild(reqDiv);
+        }
+      } catch (err) {
+        console.error('Error rendering approve requests:', err);
+        showMessage('master-msg', 'Error loading requests: ' + err.message, 'error');
+      }
+    }
+
+    window.approveRequest = async function(reqId, userId) {
+      try {
+        const req = (await db.collection('profileRequests').doc(reqId).get()).data();
+        await db.collection('users').doc(userId).update({
+          name: req.newName,
+          details: req.newDetails,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        await db.collection('profileRequests').doc(reqId).update({ status: 'approved' });
+        showMessage('master-msg', 'Request approved!', 'success');
+        renderApproveRequests();
+      } catch (err) {
+        console.error('Approve error:', err);
+        showMessage('master-msg', err.message, 'error');
+      }
+    }
+
+    window.denyRequest = async function(reqId) {
+      try {
+        await db.collection('profileRequests').doc(reqId).update({ status: 'denied' });
+        showMessage('master-msg', 'Request denied.', 'info');
+        renderApproveRequests();
+      } catch (err) {
+        console.error('Deny error:', err);
+        showMessage('master-msg', err.message, 'error');
+      }
+    }
+
+    async function renderManageUsers() {
+      const div = document.getElementById('manage-users');
+      div.innerHTML = '<h3>Manage Users</h3>';
+      try {
+        const snapshot = await db.collection('users').get();
+        snapshot.forEach(doc => {
+          const user = doc.data();
+          const userDiv = document.createElement('div');
+          userDiv.innerHTML = `
+            <p>Email: ${user.email}</p>
+            <input id="name-${doc.id}" value="${user.name || ''}" placeholder="Name">
+            <textarea id="details-${doc.id}" placeholder="Details">${user.details || ''}</textarea>
+            <input id="code-${doc.id}" value="${user.industryCode || ''}" placeholder="Industry Code">
+            <select id="role-${doc.id}">
+              <option value="client" ${user.role === 'client' ? 'selected' : ''}>Client</option>
+              <option value="master" ${user.role === 'master' ? 'selected' : ''}>Master</option>
+            </select>
+            <button class="btn btn-small" onclick="updateUser('${doc.id}')">Save</button>
+          `;
+          div.appendChild(userDiv);
+        });
+      } catch (err) {
+        console.error('Error rendering manage users:', err);
+        showMessage('master-msg', 'Error loading users: ' + err.message, 'error');
+      }
+    }
+
+    window.updateUser = async function(uid) {
+      try {
+        const name = document.getElementById(`name-${uid}`).value;
+        const details = document.getElementById(`details-${uid}`).value;
+        const code = document.getElementById(`code-${uid}`).value;
+        const role = document.getElementById(`role-${uid}`).value;
+        await db.collection('users').doc(uid).update({
+          name,
+          details,
+          industryCode: code,
+          role,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        showMessage('master-msg', 'User updated!', 'success');
+        renderManageUsers();
+      } catch (err) {
+        console.error('Update user error:', err);
+        showMessage('master-msg', err.message, 'error');
+      }
     }
 
     // Image Generation Functions
-    function aspectToSize(ar) {
-      const map = { 
-        "1:1": [768,768], 
-        "3:4": [768,1024], 
-        "4:3": [1024,768], 
-        "9:16": [768,1365], 
-        "16:9": [1365,768] 
-      };
-      return map[ar] || [768,1024];
-    }
-
     function pollinationsUrls(prompt, count, width, height, seed) {
       const quoted = encodeURIComponent(prompt);
       const base = `https://image.pollinations.ai/prompt/${quoted}?width=${width}&height=${height}&n=1`;
@@ -969,141 +1208,12 @@
       return Array.from({length: count}, (_, i) => `${base}&seed=${startSeed + i}`);
     }
 
-    async function generateImages() {
-      if (!currentUser) {
-        updateStatus("⚠️ Please sign in first.", "error");
-        return;
+    function updateStatus(id, message, type = '') {
+      const statusEl = document.getElementById(id);
+      if (statusEl) {
+        statusEl.textContent = message;
+        statusEl.className = type ? `status status-${type}` : 'status';
       }
-
-      if (!selectedTemplate) {
-        updateStatus("⚠️ Please select a template.", "error");
-        return;
-      }
-
-      if (generationCount >= MAX_GENERATIONS) {
-        updateStatus("⚠️ Maximum generation attempts reached.", "error");
-        return;
-      }
-
-      const templateDoc = await db.collection('templates').doc(selectedTemplate).get();
-      const prompt = templateDoc.data().description;
-      const [w, h] = aspectToSize('3:4'); // Default aspect ratio
-      updateStatus("🎨 Generating your images... This may take a moment.", "working");
-      document.getElementById("generate-btn").disabled = true;
-
-      try {
-        const urls = pollinationsUrls(prompt, 2, w, h, Date.now());
-        const items = urls.map(u => ({ provider: "pollinations", url: u }));
-        generationCount++;
-        renderImages(items);
-        // Save to past records
-        const record = {
-          userId: currentUser.uid,
-          templateId: selectedTemplate,
-          images: items,
-          timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        };
-        await db.collection('records').add(record);
-        pastRecords.push(record);
-        if (pastRecords.length > 3) {
-          pastRecords.shift();
-          const oldRecords = await db.collection('records')
-            .where('userId', '==', currentUser.uid)
-            .orderBy('timestamp', 'asc')
-            .limit(1)
-            .get();
-          oldRecords.forEach(doc => doc.ref.delete());
-        }
-        updateStatus(`✅ Generated 2 images successfully!`, "success");
-      } catch (e) {
-        console.error(e);
-        updateStatus(`❌ Error: ${e.message || e}`, "error");
-      } finally {
-        document.getElementById("generate-btn").disabled = false;
-      }
-    }
-
-    function renderImages(items) {
-      const container = document.getElementById("results");
-      container.innerHTML = "";
-      
-      if (items.length === 0) {
-        container.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;">No images generated</div>';
-        return;
-      }
-      
-      items.forEach((it, idx) => {
-        const card = document.createElement("div");
-        card.className = "card";
-        const src = it.url || (it.b64 ? ("data:image/png;base64," + it.b64) : "");
-        card.innerHTML = `
-          <div class="badge">${it.provider || "unknown"}</div>
-          ${src ? `<img src="${src}" alt="Generated image ${idx + 1}" loading="lazy"/>` : "<div>❌ Failed to generate</div>"}
-          <div class="image-feedback">
-            <button onclick="downloadImage(${idx}, '${src}')">${idx === 0 ? 'I like this' : 'I like that'}</button>
-            ${idx === 1 ? `<button onclick="regenerateImages()">Both bad</button>` : ''}
-          </div>
-        `;
-        container.appendChild(card);
-      });
-    }
-
-    function downloadImage(index, url) {
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `generated-image-${index + 1}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-
-    function regenerateImages() {
-      if (generationCount < MAX_GENERATIONS) {
-        generateImages();
-      } else {
-        updateStatus("⚠️ Maximum generation attempts reached.", "error");
-      }
-    }
-
-    async function loadPastRecords() {
-      const records = await db.collection('records')
-        .where('userId', '==', currentUser.uid)
-        .orderBy('timestamp', 'desc')
-        .limit(3)
-        .get();
-      pastRecords = [];
-      records.forEach(doc => pastRecords.push(doc.data()));
-      renderPastRecords();
-    }
-
-    function renderPastRecords() {
-      const container = document.getElementById("records-grid");
-      container.innerHTML = "";
-      
-      if (pastRecords.length === 0) {
-        container.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;">No past records</div>';
-        return;
-      }
-      
-      pastRecords.forEach((record, idx) => {
-        record.images.forEach((it, imgIdx) => {
-          const card = document.createElement("div");
-          card.className = "card";
-          const src = it.url || (it.b64 ? ("data:image/png;base64," + it.b64) : "");
-          card.innerHTML = `
-            <div class="badge">Record ${pastRecords.length - idx}</div>
-            ${src ? `<img src="${src}" alt="Past image ${imgIdx + 1}" loading="lazy"/>` : "<div>❌ Failed to load</div>"}
-            <button onclick="downloadImage(${imgIdx}, '${src}')">Download</button>
-          `;
-          container.appendChild(card);
-        });
-      });
-    }
-
-    function updateStatus(message, type = '') {
-      const statusEl = document.getElementById("status");
-      statusEl.textContent = message;
-      statusEl.className = type ? `status-${type}` : '';
     }
 
     // Event Listeners
@@ -1116,77 +1226,103 @@
         handleLogin(email, password);
       });
 
-      // Registration events
-      document.getElementById('send-code-btn').addEventListener('click', sendVerificationCode);
-      document.getElementById('verify-code-btn').addEventListener('click', verifyCode);
-      
+      // Registration form
       document.getElementById('register-form').addEventListener('submit', function(e) {
         e.preventDefault();
-        completeRegistration();
+        const email = document.getElementById('register-email').value;
+        const password = document.getElementById('register-password').value;
+        const code = document.getElementById('register-code').value.trim();
+        handleRegister(email, password, code);
       });
-
-      // Navigation buttons
-      document.getElementById('back-to-step1').addEventListener('click', function() {
-        hideElement('register-step2');
-        showElement('register-step1');
-      });
-
-      document.getElementById('back-to-step2').addEventListener('click', function() {
-        hideElement('register-step3');
-        showElement('register-step2');
-      });
-
-      // Logout
-      document.getElementById('logout-btn').addEventListener('click', handleLogout);
-      document.getElementById('setup-logout-btn').addEventListener('click', handleLogout);
-      document.getElementById('master-logout-btn').addEventListener('click', handleLogout);
 
       // Setup form
       document.getElementById('setup-form').addEventListener('submit', function(e) {
         e.preventDefault();
-        handleSetup();
+        const name = document.getElementById('setup-name').value;
+        const details = document.getElementById('setup-details').value;
+        handleSetup(name, details);
       });
 
       // Account form
       document.getElementById('account-form').addEventListener('submit', function(e) {
         e.preventDefault();
-        handleAccountUpdate();
+        const name = document.getElementById('account-name').value;
+        const details = document.getElementById('account-details').value;
+        handleAccountUpdate(name, details);
       });
 
-      // Template form
-      document.getElementById('template-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        addTemplate();
+      // Navigation buttons
+      document.getElementById('setup-btn').addEventListener('click', () => {
+        showPage('setup-page');
       });
 
-      // Navigation
-      document.getElementById('account-btn').addEventListener('click', function() {
-        showElement('account-page');
-        hideElement('template-page');
-        hideElement('records-page');
-        loadAccountInfo();
+      document.getElementById('account-btn').addEventListener('click', () => {
+        renderAccountInfo();
+        showPage('account-page');
       });
 
-      document.getElementById('templates-btn').addEventListener('click', function() {
-        hideElement('account-page');
-        showElement('template-page');
-        hideElement('records-page');
+      document.getElementById('template-btn').addEventListener('click', () => {
         loadTemplates();
+        showPage('template-page');
       });
 
-      document.getElementById('records-btn').addEventListener('click', function() {
-        hideElement('account-page');
-        hideElement('template-page');
-        showElement('records-page');
-        loadPastRecords();
+      document.getElementById('records-btn').addEventListener('click', () => {
+        loadRecords();
+        showPage('records-page');
       });
 
-      // Generate button
-      document.getElementById('generate-btn').addEventListener('click', generateImages);
+      document.getElementById('master-btn').addEventListener('click', () => {
+        renderTemplateManagement();
+        renderApproveRequests();
+        renderManageUsers();
+        showPage('master-page');
+      });
+
+      document.getElementById('logout-btn').addEventListener('click', handleLogout);
+
+      // Template page
+      document.getElementById('generate-images').addEventListener('click', generateImages);
+      document.getElementById('like-first').addEventListener('click', () => {
+        const items = Array.from(document.querySelectorAll('#generated-images img')).map(img => ({ url: img.src }));
+        const templateIds = Array.from(document.querySelectorAll('#template-list input:checked')).map(input => input.value);
+        handleFeedback('like-first', items, templateIds);
+      });
+      document.getElementById('like-second').addEventListener('click', () => {
+        const items = Array.from(document.querySelectorAll('#generated-images img')).map(img => ({ url: img.src }));
+        const templateIds = Array.from(document.querySelectorAll('#template-list input:checked')).map(input => input.value);
+        handleFeedback('like-second', items, templateIds);
+      });
+      document.getElementById('both-bad').addEventListener('click', () => {
+        const items = Array.from(document.querySelectorAll('#generated-images img')).map(img => ({ url: img.src }));
+        const templateIds = Array.from(document.querySelectorAll('#template-list input:checked')).map(input => input.value);
+        handleFeedback('both-bad', items, templateIds);
+      });
+
+      // Master controls
+      document.getElementById('create-template').addEventListener('click', () => {
+        const name = document.getElementById('template-name').value.trim();
+        const code = document.getElementById('template-code').value.trim();
+        if (name) createTemplate(name, code);
+        else showMessage('master-msg', 'Template name is required.', 'error');
+      });
+      document.getElementById('upload-template').addEventListener('click', () => {
+        const fileInput = document.getElementById('template-file');
+        const uploadCode = document.getElementById('upload-code').value.trim();
+        if (fileInput.files.length) {
+          uploadTemplates(fileInput.files[0], uploadCode);
+        } else {
+          showMessage('master-msg', 'Please select an XLSX file.', 'error');
+        }
+      });
+      document.getElementById('generate-code').addEventListener('click', generateIndustryCode);
 
       // Initialize
       showAuth();
     });
+
+    // Expose functions for inline onclick
+    window.deleteTemplate = deleteTemplate;
+    window.downloadImage = downloadImage;
   </script>
 </body>
 </html>
