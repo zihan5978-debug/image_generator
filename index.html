@@ -8,14 +8,13 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
-
+    
     body { 
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -24,51 +23,52 @@
       align-items: center;
       justify-content: center;
     }
-
-    .container {
+    
+    /* Authentication Styles */
+    .auth-container {
       background: white;
       border-radius: 20px;
       box-shadow: 0 20px 60px rgba(0,0,0,0.2);
       overflow: hidden;
       width: 100%;
-      max-width: 600px;
+      max-width: 450px;
       margin: 20px;
     }
-
-    .header {
+    
+    .auth-header {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
       padding: 40px 30px;
       text-align: center;
     }
-
-    .header h1 {
+    
+    .auth-header h1 {
       font-size: 2.2em;
       margin-bottom: 10px;
       font-weight: 300;
     }
-
-    .header p {
+    
+    .auth-header p {
       opacity: 0.9;
       font-size: 1.1em;
     }
-
-    .content {
+    
+    .auth-content {
       padding: 40px 30px;
     }
-
+    
     .form-group {
       margin-bottom: 25px;
     }
-
+    
     .form-group label {
       display: block;
       margin-bottom: 8px;
       font-weight: 500;
       color: #333;
     }
-
-    .form-group input, .form-group select, .form-group textarea {
+    
+    .form-group input, .form-group select {
       width: 100%;
       padding: 15px;
       border: 2px solid #e1e5e9;
@@ -76,13 +76,13 @@
       font-size: 16px;
       transition: border-color 0.3s, box-shadow 0.3s;
     }
-
-    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    
+    .form-group input:focus, .form-group select:focus {
       outline: none;
       border-color: #667eea;
       box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
     }
-
+    
     .btn {
       width: 100%;
       padding: 15px;
@@ -95,30 +95,30 @@
       cursor: pointer;
       transition: transform 0.2s, box-shadow 0.2s;
     }
-
+    
     .btn:hover {
       transform: translateY(-2px);
       box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
     }
-
+    
     .btn:disabled {
       opacity: 0.6;
       cursor: not-allowed;
       transform: none;
     }
-
+    
     .btn-secondary {
       background: #6c757d;
       margin-top: 10px;
     }
-
-    .btn-small {
+    
+    .btn-code {
       width: auto;
       padding: 10px 20px;
+      margin-left: 10px;
       font-size: 14px;
-      margin: 5px;
     }
-
+    
     .message {
       padding: 12px;
       border-radius: 8px;
@@ -126,55 +126,108 @@
       text-align: center;
       font-weight: 500;
     }
-
+    
     .message.error {
       background: #ffebee;
       color: #c62828;
       border: 1px solid #ffcdd2;
     }
-
+    
     .message.success {
       background: #e8f5e8;
       color: #2e7d32;
       border: 1px solid #c8e6c9;
     }
-
+    
     .message.info {
       background: #e3f2fd;
       color: #1976d2;
       border: 1px solid #bbdefb;
     }
-
+    
     .switch-link {
       text-align: center;
       margin-top: 25px;
+      padding-top: 25px;
+      border-top: 1px solid #e1e5e9;
     }
-
+    
     .switch-link a {
       color: #667eea;
       text-decoration: none;
       font-weight: 500;
     }
-
+    
     .switch-link a:hover {
       text-decoration: underline;
     }
-
+    
+    .code-input-group {
+      display: flex;
+      align-items: center;
+    }
+    
+    .code-input-group input {
+      flex: 1;
+    }
+    
+    .code-display, .product-display, .prompt-display {
+      background: #e3f2fd;
+      border: 2px solid #bbdefb;
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 15px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: 500;
+      color: #1976d2;
+      position: relative;
+      display: none;
+    }
+    
+    .code-display.show, .product-display.show, .prompt-display.show {
+      display: block;
+    }
+    
+    .code-display span {
+      font-family: monospace;
+      font-size: 20px;
+    }
+    
+    .code-display button {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    
+    .code-display button:hover {
+      background: #5a6cd1;
+    }
+    
     .hidden {
       display: none !important;
     }
-
+    
+    /* Main App Styles */
     .main-app {
       display: none;
       min-height: 100vh;
       width: 100%;
       background: #f8f9fa;
     }
-
+    
     .main-app.show {
       display: block;
     }
-
+    
     .app-header {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
@@ -184,32 +237,43 @@
       align-items: center;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
-
+    
     .app-header h1 {
       font-size: 1.8em;
       font-weight: 300;
     }
-
-    .nav-btn {
+    
+    .nav-links a {
+      color: white;
+      margin-left: 20px;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    
+    .nav-links a:hover {
+      text-decoration: underline;
+    }
+    
+    .logout-btn {
       padding: 10px 20px;
       background: rgba(255,255,255,0.2);
       border: 1px solid rgba(255,255,255,0.3);
       color: white;
       border-radius: 8px;
       cursor: pointer;
-      margin-left: 10px;
+      transition: background-color 0.2s;
     }
-
-    .nav-btn:hover {
+    
+    .logout-btn:hover {
       background: rgba(255,255,255,0.3);
     }
-
+    
     .app-content {
       max-width: 1200px;
       margin: 0 auto;
       padding: 30px 20px;
     }
-
+    
     .controls {
       background: white;
       border-radius: 15px;
@@ -217,110 +281,175 @@
       box-shadow: 0 5px 20px rgba(0,0,0,0.1);
       margin-bottom: 30px;
     }
-
-    .row {
-      display: flex;
-      gap: 20px;
-      flex-wrap: wrap;
-      margin-bottom: 25px;
+    
+    .row { 
+      display: flex; 
+      gap: 20px; 
+      flex-wrap: wrap; 
+      margin-bottom: 25px; 
       align-items: end;
     }
-
+    
     .row > * {
       flex: 1;
       min-width: 200px;
     }
-
+    
+    .controls textarea, .controls input, .controls select, .controls button { 
+      padding: 12px; 
+      font-size: 14px; 
+      border: 2px solid #e1e5e9;
+      border-radius: 8px;
+      transition: border-color 0.3s;
+    }
+    
+    .controls textarea:focus, .controls input:focus, .controls select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    .controls textarea { 
+      width: 100%; 
+      height: 120px; 
+      resize: vertical;
+      font-family: inherit;
+    }
+    
+    .controls label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #333;
+    }
+    
     .generate-btn {
       background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      font-size: 16px;
+      font-weight: 500;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
     }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 20px;
+    
+    .generate-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(17, 153, 142, 0.4);
     }
-
-    .card {
+    
+    .generate-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .grid { 
+      display: grid; 
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
+      gap: 20px; 
+    }
+    
+    .card { 
       background: white;
-      border-radius: 12px;
-      padding: 15px;
+      border-radius: 12px; 
+      padding: 15px; 
       box-shadow: 0 5px 20px rgba(0,0,0,0.1);
       transition: transform 0.2s, box-shadow 0.2s;
     }
-
+    
     .card:hover {
       transform: translateY(-5px);
       box-shadow: 0 10px 30px rgba(0,0,0,0.15);
     }
-
-    .card img {
-      width: 100%;
-      height: auto;
-      border-radius: 8px;
+    
+    .card img { 
+      width: 100%; 
+      height: auto; 
+      display: block; 
+      border-radius: 8px; 
       margin-bottom: 10px;
     }
-
-    .badge {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    
+    .badge { 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
       color: white;
-      padding: 5px 12px;
-      border-radius: 20px;
-      font-size: 12px;
+      padding: 5px 12px; 
+      border-radius: 20px; 
+      font-size: 12px; 
       font-weight: 500;
       display: inline-block;
       margin-bottom: 10px;
     }
-
-    .status {
-      margin: 15px 0;
+    
+    #status { 
+      margin: 15px 0; 
       padding: 12px;
       border-radius: 8px;
       font-weight: 500;
     }
-
+    
     .status-working {
       background: #e3f2fd;
       color: #1976d2;
       border: 1px solid #bbdefb;
     }
-
+    
     .status-success {
       background: #e8f5e8;
       color: #2e7d32;
       border: 1px solid #c8e6c9;
     }
-
+    
     .status-error {
       background: #ffebee;
       color: #c62828;
       border: 1px solid #ffcdd2;
     }
-
-    .template-list {
-      margin-bottom: 20px;
-    }
-
-    .template-list label {
-      display: block;
+    
+    .template-checkboxes label {
+      display: flex;
+      align-items: center;
       margin-bottom: 10px;
     }
-
+    
+    .template-checkboxes input[type="checkbox"] {
+      margin-right: 10px;
+    }
+    
+    .image-feedback {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 10px;
+    }
+    
+    .image-feedback button {
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    
     @media (max-width: 768px) {
       .row {
         flex-direction: column;
       }
-
+      
       .row > * {
         min-width: unset;
       }
-
+      
       .app-header {
         flex-direction: column;
         gap: 15px;
         text-align: center;
       }
-
+      
+      .controls {
+        padding: 20px;
+      }
+      
       .grid {
         grid-template-columns: 1fr;
       }
@@ -329,13 +458,13 @@
 </head>
 <body>
   <!-- Authentication Container -->
-  <div id="auth-container" class="container">
-    <div class="header">
+  <div id="auth-container" class="auth-container">
+    <div class="auth-header">
       <h1>🎨 AI Design Generator</h1>
       <p>Create stunning images with AI</p>
     </div>
-
-    <div class="content">
+    
+    <div class="auth-content">
       <!-- Login Form -->
       <form id="login-form">
         <div class="form-group">
@@ -346,31 +475,62 @@
           <label for="login-password">Password</label>
           <input id="login-password" type="password" required autocomplete="current-password" placeholder="Enter your password">
         </div>
+        <div class="form-group">
+          <a href="#" id="reset-password-link" onclick="resetPassword(); return false;">Forgot password?</a>
+        </div>
         <button type="submit" class="btn">Sign In</button>
         <div id="login-msg" class="message" style="display: none;"></div>
-        <div class="switch-link">
-          <a href="#" onclick="resetPassword()">Forgot password?</a>
-        </div>
       </form>
-
+      
       <!-- Registration Form -->
       <form id="register-form" class="hidden">
-        <div class="form-group">
-          <label for="register-email">Email Address</label>
-          <input id="register-email" type="email" required autocomplete="username" placeholder="Enter your email">
+        <!-- Step 1: Email and Industry Code -->
+        <div id="register-step1">
+          <div class="form-group">
+            <label for="register-email">Email Address</label>
+            <input id="register-email" type="email" required autocomplete="username" placeholder="Enter your email">
+          </div>
+          <div class="form-group">
+            <label for="register-industry-code">Industry Code</label>
+            <input id="register-industry-code" type="text" required placeholder="Enter industry code">
+          </div>
+          <div class="code-input-group">
+            <button type="button" id="send-code-btn" class="btn btn-code">Send Verification Code</button>
+          </div>
+          <div id="register-msg-step1" class="message" style="display: none;"></div>
         </div>
-        <div class="form-group">
-          <label for="register-password">Password</label>
-          <input id="register-password" type="password" required autocomplete="new-password" placeholder="Create a password">
+        
+        <!-- Step 2: Verification -->
+        <div id="register-step2" class="hidden">
+          <div class="form-group">
+            <label for="register-code">Verification Code</label>
+            <input id="register-code" type="text" required placeholder="Enter 6-digit code">
+          </div>
+          <button type="button" id="verify-code-btn" class="btn">Verify Code</button>
+          <button type="button" id="back-to-step1" class="btn btn-secondary">Back</button>
+          <div id="register-msg-step2" class="message" style="display: none;"></div>
         </div>
-        <div class="form-group">
-          <label for="register-code">Industry Code</label>
-          <input id="register-code" type="text" required placeholder="Enter industry code (e.g., 000000 for master)">
+        
+        <!-- Step 3: Complete Registration -->
+        <div id="register-step3" class="hidden">
+          <div class="form-group">
+            <label for="register-password">Password</label>
+            <input id="register-password" type="password" required autocomplete="new-password" placeholder="Create a password">
+          </div>
+          <div class="form-group">
+            <label for="register-password2">Confirm Password</label>
+            <input id="register-password2" type="password" required autocomplete="new-password" placeholder="Confirm your password">
+          </div>
+          <div class="form-group">
+            <label for="register-name">Full Name</label>
+            <input id="register-name" type="text" required placeholder="Enter your full name">
+          </div>
+          <button type="submit" class="btn">Create Account</button>
+          <button type="button" id="back-to-step2" class="btn btn-secondary">Back</button>
+          <div id="register-msg-step3" class="message" style="display: none;"></div>
         </div>
-        <button type="submit" class="btn">Create Account</button>
-        <div id="register-msg" class="message" style="display: none;"></div>
       </form>
-
+      
       <div class="switch-link">
         <span id="switch-to-register">Don't have an account? <a href="#" onclick="showRegister(); return false;">Sign up</a></span>
         <span id="switch-to-login" class="hidden">Already have an account? <a href="#" onclick="showLogin(); return false;">Sign in</a></span>
@@ -382,16 +542,16 @@
   <div id="main-app" class="main-app">
     <div class="app-header">
       <h1>🎨 AI Design Generator</h1>
-      <div>
-        <button id="setup-btn" class="nav-btn">Setup</button>
-        <button id="account-btn" class="nav-btn">Account</button>
-        <button id="template-btn" class="nav-btn">Templates</button>
-        <button id="records-btn" class="nav-btn">Past Records</button>
-        <button id="master-btn" class="nav-btn hidden">Master Controls</button>
-        <button id="logout-btn" class="nav-btn">Logout</button>
+      <div class="nav-links">
+        <a href="#" onclick="showPage('setup-page'); return false;">Setup</a>
+        <a href="#" onclick="showPage('account-page'); return false;">Account</a>
+        <a href="#" onclick="showPage('template-page'); return false;">Templates</a>
+        <a href="#" onclick="showPage('records-page'); return false;">Past Records</a>
+        <a href="#" id="create-account-link" onclick="showPage('create-account-page'); return false;" class="hidden">Create Account</a>
+        <button id="logout-btn" class="logout-btn">Logout</button>
       </div>
     </div>
-
+    
     <div class="app-content">
       <!-- Setup Page -->
       <div id="setup-page" class="controls hidden">
@@ -401,124 +561,119 @@
             <label for="setup-name">Full Name</label>
             <input id="setup-name" type="text" required placeholder="Enter your full name">
           </div>
+          <div class="form-group hidden" id="setup-industry-group">
+            <label for="setup-industry">Industry</label>
+            <input id="setup-industry" type="text" placeholder="Enter your industry (optional)">
+          </div>
           <div class="form-group">
-            <label for="setup-details">Additional Details</label>
-            <textarea id="setup-details" placeholder="Optional details"></textarea>
+            <label for="setup-product">Product Name</label>
+            <input id="setup-product" type="text" required placeholder="Enter product name (e.g., lip gloss, phone)">
           </div>
           <button type="submit" class="btn">Save Profile</button>
           <div id="setup-msg" class="message" style="display: none;"></div>
         </form>
       </div>
-
+      
       <!-- Account Page -->
-      <div id="account-page" class="controls hidden">
-        <h2>Account Information</h2>
-        <div id="account-info"></div>
-        <form id="account-form">
-          <div class="form-group">
-            <label for="account-name">Full Name</label>
-            <input id="account-name" type="text" required placeholder="Enter your full name">
-          </div>
-          <div class="form-group">
-            <label for="account-details">Additional Details</label>
-            <textarea id="account-details" placeholder="Optional details"></textarea>
-          </div>
-          <button type="submit" class="btn">Update Profile</button>
-          <div id="account-msg" class="message" style="display: none;"></div>
-        </form>
-      </div>
-
+      <div id="create-account-page" class="controls hidden">
+  <h2>Template Management</h2>
+  <form id="create-account-form">
+    <div class="form-group">
+      <label for="industry-name">Industry Name</label>
+      <input id="industry-name" type="text" required placeholder="Enter industry name (e.g., Class A)">
+    </div>
+    <div class="form-group">
+      <label for="industry-template">Templates</label>
+      <select id="industry-template" required>
+        <option value="">-- Select or Add a template --</option>
+      </select>
+      <button type="button" id="add-template-btn" class="btn btn-code" style="margin-top:8px;">Add New Template</button>
+      <button type="button" id="rename-template-btn" class="btn btn-code" style="margin-top:8px;">Rename Selected Template</button>
+    </div>
+    <div class="form-group" id="template-name-group" style="display:none;">
+      <label id="template-name-label" for="template-name">Template Name</label>
+      <input id="template-name" type="text" placeholder="Enter template name">
+      <button type="button" id="template-name-save" class="btn btn-code">Save</button>
+    </div>
+    <div class="form-group">
+      <label for="industry-product">Product Name</label>
+      <input id="industry-product" type="text" required placeholder="Enter product name (e.g., lip gloss, phone)">
+    </div>
+    <button type="submit" class="btn" id="save-industry-btn">Save Your Changes</button>
+    <div id="create-account-msg" class="message" style="display: none;"></div>
+  </form>
+  <div id="generated-code" class="code-display hidden">
+    Industry Code: <span id="industry-code"></span>
+    <button onclick="copyCode()">Copy</button>
+  </div>
+</div>
+      
       <!-- Template Page -->
-      <div id="template-page" class="controls hidden">
-        <h2>Select Template</h2>
-        <div id="template-list" class="template-list"></div>
-        <button id="generate-images" class="btn generate-btn">✨ Generate Images</button>
-        <div id="template-status" class="status"></div>
+      <div id="template-page" class="controls">
+        <h2>Generate Images</h2>
+        <div id="product-display" class="product-display" style="display: none;"></div>
+        <div id="prompt-display" class="prompt-display" style="display: none;"></div>
+        <h3>Select Template</h3>
+        <div class="template-checkboxes" id="template-checkboxes"></div>
+        <button id="generate-images-btn" class="generate-btn">✨ Generate Images</button>
+        <div id="template-status" class="message" style="display: none;"></div>
         <div id="generated-images" class="grid"></div>
-        <div id="feedback-section" class="hidden">
-          <button id="like-first" class="btn btn-small">I like this</button>
-          <button id="like-second" class="btn btn-small">I like that</button>
-          <button id="both-bad" class="btn btn-small">Both bad</button>
-        </div>
       </div>
-
+      
       <!-- Past Records Page -->
       <div id="records-page" class="controls hidden">
-        <h2>Past Records</h2>
+        <h2>Past Generation Records</h2>
         <div id="records-list" class="grid"></div>
+        <div id="records-msg" class="message" style="display: none;"></div>
       </div>
-
-      <!-- Master Controls Page -->
-      <div id="master-page" class="controls hidden">
-        <h2>Master Controls</h2>
-        <div class="form-group">
-          <label for="template-name">Create New Template</label>
-          <input id="template-name" type="text" placeholder="Enter template name">
-          <label for="template-code">Industry Code (optional, auto-generate if blank)</label>
-          <input id="template-code" type="text" placeholder="Enter or generate code">
-          <button id="create-template" class="btn btn-small">Create Template</button>
+      
+      <!-- Create Account Page (Master Only) -->
+      <div id="create-account-page" class="controls hidden">
+        <h2>Create Industry Account</h2>
+        <form id="create-account-form">
+          <div class="form-group">
+            <label for="industry-name">Industry Name</label>
+            <input id="industry-name" type="text" required placeholder="Enter industry name (e.g., Class A)">
+          </div>
+          <div class="form-group">
+            <label for="industry-template">Select Template</label>
+            <select id="industry-template" required>
+              <option value="">Select a template</option>
+              <option value="modern">Modern Design</option>
+              <option value="classic">Classic Design</option>
+              <option value="minimalist">Minimalist Design</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="industry-product">Product Name</label>
+            <input id="industry-product" type="text" required placeholder="Enter product name (e.g., lip gloss, phone)">
+          </div>
+          <button type="submit" class="btn">Generate Industry Code</button>
+          <div id="create-account-msg" class="message" style="display: none;"></div>
+        </form>
+        <div id="generated-code" class="code-display hidden">
+          Industry Code: <span id="industry-code"></span>
+          <button onclick="copyCode()">Copy</button>
         </div>
-        <div class="form-group">
-          <label for="template-file">Upload Template File (XLSX)</label>
-          <input id="template-file" type="file" accept=".xlsx">
-          <label for="upload-code">Industry Code for all (optional, auto-generate per if blank)</label>
-          <input id="upload-code" type="text" placeholder="Enter code for all templates">
-          <button id="upload-template" class="btn btn-small">Upload Templates</button>
-        </div>
-        <div id="template-management"></div>
-        <div class="form-group">
-          <label for="industry-code">Generate Industry Code</label>
-          <input id="industry-code" type="text" readonly>
-          <button id="generate-code" class="btn btn-small">Generate Code</button>
-        </div>
-        <div id="approve-requests"></div>
-        <div id="manage-users"></div>
-        <div id="master-msg" class="message" style="display: none;"></div>
       </div>
     </div>
   </div>
 
   <script>
-    // Important: To fix "Missing or insufficient permissions" error, set the following Firestore security rules in your Firebase Console (Firestore Database > Rules tab):
-    // rules_version = '2';
-    // service cloud.firestore {
-    //   match /databases/{database}/documents {
-    //     match /users/{userId} {
-    //       allow read: if request.auth != null && request.auth.uid == userId;
-    //       allow create: if request.auth != null && request.auth.uid == userId;
-    //       allow update: if request.auth != null && (request.auth.uid == userId || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'master');
-    //     }
-    //     match /templates/{templateId} {
-    //       allow read: if request.auth != null;
-    //       allow create, update, delete: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'master';
-    //     }
-    //     match /generations/{generationId} {
-    //       allow read: if request.auth != null && resource.data.userId == request.auth.uid;
-    //       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-    //       allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
-    //     }
-    //     match /profileRequests/{reqId} {
-    //       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-    //       allow read: if request.auth != null && (resource.data.userId == request.auth.uid || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'master');
-    //       allow update: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'master';
-    //     }
-    //   }
-    // }
-
-    // EmailJS Configuration (unused but kept for potential future use)
+    // EmailJS Configuration
     const EMAILJS_SERVICE_ID = 'service_ghvr7ui';
     const EMAILJS_TEMPLATE_ID = 'template_x4lt4dk';
     emailjs.init('gtluK1AW_Y5bE9mVp');
 
     // Firebase Configuration
     const firebaseConfig = {
-      apiKey: "AIzaSyBtF_37PsX1ItQobFZkOVSMUEio2NPmdoM",
-      authDomain: "login-system-ae45f.firebaseapp.com",
-      projectId: "login-system-ae45f",
-      storageBucket: "login-system-ae45f.firebasestorage.app",
-      messagingSenderId: "178893070717",
-      appId: "1:178893070717:web:e2bc8f79ce87f85391ec14",
-      measurementId: "G-Y4H7X7DJ88"
+      apiKey: "AIzaSyC0P-rmy6ZiKCBnivZQBahKWaPcqg4nDnU",
+      authDomain: "image-generator-c51e2.firebaseapp.com",
+      projectId: "image-generator-c51e2",
+      storageBucket: "image-generator-c51e2.firebasestorage.app",
+      messagingSenderId: "222706847155",
+      appId: "1:222706847155:web:824453eca61077f5f0cfc6",
+      measurementId: "G-JSK1FHFEMT"
     };
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
@@ -527,56 +682,36 @@
     // Global state
     let currentUser = null;
     let userRole = null;
-    let userData = {};
-    let bothBadCount = 0;
-    const MAX_BOTH_BAD = 20;
-    const MASTER_EMAIL = 'langtechgroup5@gmail.com';
-
-    // XLSX Processing
-    function filledCell(cell) {
-      return cell !== '' && cell != null;
-    }
-
-    async function processXlsxFile(file) {
-      try {
-        const reader = new FileReader();
-        return new Promise((resolve, reject) => {
-          reader.onload = function(e) {
-            try {
-              const data = e.target.result.split(',')[1]; // Get base64 data
-              const workbook = XLSX.read(data, { type: 'base64' });
-              const firstSheetName = workbook.SheetNames[0];
-              const worksheet = workbook.Sheets[firstSheetName];
-              const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-              const filteredData = jsonData.filter(row => row.some(filledCell));
-              const headerRowIndex = filteredData.findIndex((row, index) =>
-                row.filter(filledCell).length >= (filteredData[index + 1]?.filter(filledCell).length || 0)
-              );
-              const startIndex = headerRowIndex === -1 || headerRowIndex > 25 ? 0 : headerRowIndex;
-              const templates = filteredData.slice(startIndex).map(row => row[0]?.toString().trim()).filter(name => name);
-              resolve(templates);
-            } catch (err) {
-              reject(err);
-            }
-          };
-          reader.onerror = () => reject(new Error('File reading failed'));
-          reader.readAsDataURL(file);
-        });
-      } catch (err) {
-        console.error('XLSX processing error:', err);
-        throw err;
-      }
-    }
+    let userTemplates = [];
+    let generationCount = 0;
+    let userProductName = '';
+    let userIndustryCode = null;
 
     // UI Helper Functions
     function showElement(id) {
       const el = document.getElementById(id);
-      if (el) el.classList.remove('hidden');
+      if (!el) {
+        console.error(`Element with ID ${id} not found in DOM`);
+        return;
+      }
+      console.log(`Showing element: ${id}`);
+      el.classList.remove('hidden');
+      el.classList.add('show');
+      el.style.display = 'block'; // Force visibility
+      console.log(`Set ${id} to display: block, classes: ${el.className}, computed display: ${window.getComputedStyle(el).display}`);
     }
 
     function hideElement(id) {
       const el = document.getElementById(id);
-      if (el) el.classList.add('hidden');
+      if (!el) {
+        console.error(`Element with ID ${id} not found in DOM`);
+        return;
+      }
+      console.log(`Hiding element: ${id}`);
+      el.classList.add('hidden');
+      el.classList.remove('show');
+      el.style.display = 'none';
+      console.log(`Set ${id} to display: none, classes: ${el.className}`);
     }
 
     function showMessage(id, message, type = 'info') {
@@ -585,12 +720,18 @@
         el.textContent = message;
         el.className = `message ${type}`;
         el.style.display = 'block';
+        console.log(`Showing message on ${id}: ${message} (${type})`);
+      } else {
+        console.error(`Message element ${id} not found`);
       }
     }
 
     function hideMessage(id) {
       const el = document.getElementById(id);
-      if (el) el.style.display = 'none';
+      if (el) {
+        el.style.display = 'none';
+        console.log(`Hiding message on ${id}`);
+      }
     }
 
     function showLogin() {
@@ -606,23 +747,55 @@
       showElement('register-form');
       hideElement('switch-to-register');
       showElement('switch-to-login');
+      showElement('register-step1');
+      hideElement('register-step2');
+      hideElement('register-step3');
       document.getElementById('register-form').reset();
-      hideMessage('register-msg');
+      hideMessage('register-msg-step1');
+      hideMessage('register-msg-step2');
+      hideMessage('register-msg-step3');
     }
 
     function showPage(pageId) {
-      ['setup-page', 'account-page', 'template-page', 'records-page', 'master-page'].forEach(id => {
-        if (id === pageId) showElement(id);
-        else hideElement(id);
-      });
+      const pages = ['setup-page', 'account-page', 'template-page', 'records-page', 'create-account-page'];
+      if (pageId === 'create-account-page' && userRole !== 'master') {
+        console.log('Client attempted to access create-account-page; redirecting to template-page');
+        showMessage('template-status', 'Access denied: Only master accounts can create industry codes.', 'error');
+        pageId = 'template-page';
+      }
+      pages.forEach(id => hideElement(id));
+      console.log(`Navigating to page: ${pageId}`);
+      showElement(pageId);
+      if (pageId === 'create-account-page') {
+        console.log('Resetting create-account-page');
+        hideElement('generated-code');
+        const codeSpan = document.getElementById('industry-code');
+        if (codeSpan) {
+          codeSpan.textContent = '';
+          console.log('Cleared industry-code span');
+        } else {
+          console.error('industry-code span not found');
+        }
+        document.getElementById('create-account-form').reset();
+        hideMessage('create-account-msg');
+      }
+      if (pageId === 'template-page') {
+        console.log('Loading templates for template-page');
+        loadTemplates();
+      }
+      if (pageId === 'records-page') loadRecords();
+      if (pageId === 'account-page') loadAccountInfo();
     }
 
     function showMainApp() {
       document.getElementById('auth-container').style.display = 'none';
       document.getElementById('main-app').classList.add('show');
-      if (userRole === 'master') showElement('master-btn');
-      if (!userData.name) showPage('setup-page');
-      else showPage('template-page');
+      if (userRole === 'master') {
+        showElement('create-account-link');
+      } else {
+        hideElement('create-account-link');
+      }
+      showPage(currentUser && !currentUser.displayName ? 'setup-page' : 'template-page');
     }
 
     function showAuth() {
@@ -631,100 +804,82 @@
       showLogin();
     }
 
+    // Copy Industry Code
+    function copyCode() {
+      const codeSpan = document.getElementById('industry-code');
+      const code = codeSpan ? codeSpan.textContent : '';
+      if (!code) {
+        showMessage('create-account-msg', 'No code available to copy.', 'error');
+        console.error('No industry code to copy');
+        return;
+      }
+      navigator.clipboard.writeText(code).then(() => {
+        showMessage('create-account-msg', 'Industry code copied to clipboard!', 'success');
+        console.log(`Copied industry code: ${code}`);
+      }).catch(err => {
+        showMessage('create-account-msg', 'Failed to copy code. Please copy manually.', 'error');
+        console.error('Failed to copy code:', err);
+      });
+    }
+
     // Authentication Functions
     async function handleLogin(email, password) {
+      console.log('Attempting login with email:', email);
       try {
-        console.log('Attempting login with email:', email);
         showMessage('login-msg', 'Signing in...', 'info');
         const result = await auth.signInWithEmailAndPassword(email, password);
+        console.log('Login successful, user:', result.user.uid);
         currentUser = result.user;
-        console.log('Login successful, UID:', currentUser.uid);
-        await loadUserData();
-        console.log('User role:', userRole, 'User data:', userData);
+        await checkUserRole();
+        console.log('User role:', userRole);
         hideMessage('login-msg');
         showMainApp();
       } catch (err) {
-        console.error('Login error:', err.code, err.message);
-        let message = 'Login failed. Please check your credentials.';
-        if (err.code === 'auth/user-not-found') {
-          message = 'No account found with this email. Please sign up.';
+        let errorMessage = 'An error occurred during login. Please try again.';
+        if (err.code === 'auth/invalid-login-credentials') {
+          errorMessage = 'Incorrect email or password. Please check your credentials or reset your password.';
+        } else if (err.code === 'auth/user-not-found') {
+          errorMessage = 'No account found with this email. Please sign up.';
         } else if (err.code === 'auth/wrong-password') {
-          message = 'Incorrect password. Try again.';
-        } else if (err.code === 'auth/invalid-login-credentials') {
-          message = 'Invalid login credentials. Check your email and password.';
-        } else if (err.code === 'auth/invalid-email') {
-          message = 'Invalid email format.';
+          errorMessage = 'Incorrect password. Please try again or reset your password.';
+        } else if (err.code === 'auth/too-many-requests') {
+          errorMessage = 'Too many login attempts. Please try again later.';
         }
-        showMessage('login-msg', message, 'error');
+        showMessage('login-msg', errorMessage, 'error');
+        console.error('Login error:', err);
       }
     }
 
-    async function handleRegister(email, password, code) {
-      try {
-        showMessage('register-msg', 'Creating account...', 'info');
-        // Allow master registration with '000000' even if templates collection is empty
-        if (code !== '000000') {
-          const templateDoc = await db.collection('templates').where('code', '==', code).get();
-          if (templateDoc.empty) {
-            showMessage('register-msg', 'Invalid industry code.', 'error');
-            return;
-          }
-        }
-        const result = await auth.createUserWithEmailAndPassword(email, password);
-        currentUser = result.user;
-        console.log('User created with UID:', currentUser.uid);
-        const role = code === '000000' ? 'master' : 'client';
-        await db.collection('users').doc(currentUser.uid).set({
-          email,
-          role,
-          industryCode: code,
-          name: '',
-          details: '',
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        console.log('User data written to Firestore');
-        userRole = role;
-        userData = { email, role, industryCode: code, name: '', details: '' };
-        showMessage('register-msg', 'Account created successfully!', 'success');
-        setTimeout(() => showMainApp(), 1000);
-      } catch (err) {
-        console.error('Registration error:', err);
-        showMessage('register-msg', err.message, 'error');
-      }
-    }
-
-    function resetPassword() {
-      const email = document.getElementById('login-email').value;
-      if (email) {
-        auth.sendPasswordResetEmail(email)
-          .then(() => showMessage('login-msg', 'Password reset email sent! Check your inbox.', 'success'))
-          .catch(err => showMessage('login-msg', 'Error sending reset email: ' + err.message, 'error'));
-      } else {
+    async function resetPassword() {
+      const email = document.getElementById('login-email').value.trim();
+      if (!email) {
         showMessage('login-msg', 'Please enter your email to reset password.', 'error');
+        return;
+      }
+      try {
+        showMessage('login-msg', 'Sending password reset email...', 'info');
+        await auth.sendPasswordResetEmail(email);
+        showMessage('login-msg', 'Password reset email sent. Check your inbox.', 'success');
+      } catch (err) {
+        showMessage('login-msg', 'Error sending reset email: ' + err.message, 'error');
+        console.error('Password reset error:', err);
       }
     }
 
-    async function loadUserData() {
-      if (!currentUser) return;
-      try {
-        const doc = await db.collection('users').doc(currentUser.uid).get();
-        if (doc.exists) {
-          userData = doc.data();
-          userRole = userData.role || 'client'; // Default to client if role missing
-          // Auto-fix master role if industryCode is '000000' or email is master
-          if ((userData.industryCode === '000000' || userData.email === MASTER_EMAIL) && userRole !== 'master') {
-            userRole = 'master';
-            await db.collection('users').doc(currentUser.uid).update({ role: 'master' });
-            console.log('Auto-fixed role to master');
-          }
-          console.log('User data loaded:', userData);
-        } else {
-          console.warn('No user data found for UID:', currentUser.uid);
-          showMessage('login-msg', 'User data not found. Please register or contact support.', 'error');
-        }
-      } catch (err) {
-        console.error('Error loading user data:', err);
-        showMessage('login-msg', 'Error loading user data: ' + err.message, 'error');
+    async function checkUserRole() {
+      if (currentUser.email === 'langtechgroup5@gmail.com') {
+        userRole = 'master';
+        return;
+      }
+      const userDoc = await db.collection('users').doc(currentUser.uid).get();
+      userRole = userDoc.exists ? userDoc.data().role || 'client' : 'client';
+      userIndustryCode = userDoc.exists ? userDoc.data().industryCode || null : null;
+      if (userRole === 'client') {
+        hideElement('setup-industry-group');
+        hideElement('account-industry-group');
+      } else {
+        showElement('setup-industry-group');
+        showElement('account-industry-group');
       }
     }
 
@@ -732,157 +887,345 @@
       auth.signOut().then(() => {
         currentUser = null;
         userRole = null;
-        userData = {};
-        bothBadCount = 0;
+        userTemplates = [];
+        userProductName = '';
+        userIndustryCode = null;
         showAuth();
-      }).catch(err => {
-        console.error('Logout error:', err);
-        showMessage('login-msg', 'Logout failed: ' + err.message, 'error');
       });
     }
 
-    // Setup and Account Functions
-    async function handleSetup(name, details) {
+    // Registration Functions
+    async function sendVerificationCode() {
+      const email = document.getElementById('register-email').value.trim();
+      const industryCode = document.getElementById('register-industry-code').value.trim();
+      if (!email || !industryCode) {
+        showMessage('register-msg-step1', 'Please enter your email and industry code.', 'error');
+        return;
+      }
+
+      const codeDoc = await db.collection('industryCodes').doc(industryCode).get();
+      if (!codeDoc.exists) {
+        showMessage('register-msg-step1', 'Invalid industry code.', 'error');
+        return;
+      }
+
+      window._registerCode = Math.floor(100000 + Math.random() * 900000).toString();
+      window._registerEmail = email;
+      window._industryCode = industryCode;
+
+      try {
+        showMessage('register-msg-step1', 'Sending verification code...', 'info');
+        await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+          email: email,
+          code: window._registerCode
+        });
+        showMessage('register-msg-step1', 'Verification code sent to your email!', 'success');
+        hideElement('register-step1');
+        showElement('register-step2');
+      } catch (err) {
+        showMessage('register-msg-step1', 'Failed to send email: ' + (err.text || err.message), 'error');
+      }
+    }
+
+    function verifyCode() {
+      const code = document.getElementById('register-code').value.trim();
+      if (code === window._registerCode) {
+        hideMessage('register-msg-step2');
+        hideElement('register-step2');
+        showElement('register-step3');
+      } else {
+        showMessage('register-msg-step2', 'Incorrect verification code.', 'error');
+      }
+    }
+
+    async function completeRegistration() {
+      const password = document.getElementById('register-password').value;
+      const password2 = document.getElementById('register-password2').value;
+      const name = document.getElementById('register-name').value;
+
+      if (password !== password2) {
+        showMessage('register-msg-step3', 'Passwords do not match.', 'error');
+        return;
+      }
+
+      if (password.length < 6) {
+        showMessage('register-msg-step3', 'Password must be at least 6 characters.', 'error');
+        return;
+      }
+
+      try {
+        showMessage('register-msg-step3', 'Creating your account...', 'info');
+        const result = await auth.createUserWithEmailAndPassword(window._registerEmail, password);
+        currentUser = result.user;
+
+        const codeDoc = await db.collection('industryCodes').doc(window._industryCode).get();
+        const { industry, template, productName } = codeDoc.data();
+
+        await db.collection('users').doc(currentUser.uid).set({
+          email: window._registerEmail,
+          name: name,
+          role: 'client',
+          industryCode: window._industryCode,
+          industry: industry,
+          template: template,
+          productName: productName || 'Product',
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        userRole = 'client';
+        userTemplates = [template];
+        userProductName = productName || 'Product';
+        userIndustryCode = window._industryCode;
+        hideElement('setup-industry-group');
+        hideElement('account-industry-group');
+        showMessage('register-msg-step3', 'Account created successfully!', 'success');
+        setTimeout(() => showMainApp(), 1000);
+      } catch (err) {
+        showMessage('register-msg-step3', err.message, 'error');
+      }
+    }
+
+    // Setup Page Functions
+    async function handleSetup(e) {
+      e.preventDefault();
+      const name = document.getElementById('setup-name').value.trim();
+      const productName = document.getElementById('setup-product').value.trim();
+      const industry = userRole === 'master' ? document.getElementById('setup-industry').value.trim() : null;
+
+      if (!name || !productName) {
+        showMessage('setup-msg', 'Please enter your full name and product name.', 'error');
+        return;
+      }
+
       try {
         showMessage('setup-msg', 'Saving profile...', 'info');
-        await db.collection('users').doc(currentUser.uid).update({
-          name,
-          details,
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        userData.name = name;
-        userData.details = details;
-        console.log('Profile saved:', { name, details });
+        const userDoc = await db.collection('users').doc(currentUser.uid).get();
+        const existingData = userDoc.exists ? userDoc.data() : {};
+        await db.collection('users').doc(currentUser.uid).set({
+          name: name,
+          industry: industry || existingData.industry || null,
+          industryCode: existingData.industryCode || null,
+          productName: productName,
+          setupCompleted: true
+        }, { merge: true });
+        await currentUser.updateProfile({ displayName: name });
+        userProductName = productName;
         showMessage('setup-msg', 'Profile saved successfully!', 'success');
         setTimeout(() => showPage('template-page'), 1000);
       } catch (err) {
-        console.error('Setup error:', err);
-        showMessage('setup-msg', err.message, 'error');
+        showMessage('setup-msg', 'Error saving profile: ' + err.message, 'error');
       }
     }
 
-    async function handleAccountUpdate(name, details) {
+    // Account Page Functions
+    async function loadAccountInfo() {
+      const userDoc = await db.collection('users').doc(currentUser.uid).get();
+      if (userDoc.exists) {
+        const data = userDoc.data();
+        userProductName = data.productName || 'Product';
+        userIndustryCode = data.industryCode || null;
+        let industryDisplay = data.industry || 'Not specified';
+        if (userIndustryCode) {
+          const codeDoc = await db.collection('industryCodes').doc(userIndustryCode).get();
+          industryDisplay = codeDoc.exists ? codeDoc.data().industry : 'Unknown';
+        }
+        document.getElementById('account-info').innerHTML = `
+          <p><strong>Name:</strong> ${data.name}</p>
+          <p><strong>Email:</strong> ${currentUser.email}</p>
+          <p><strong>Industry:</strong> ${industryDisplay}</p>
+          <p><strong>Template:</strong> ${data.template || 'None'}</p>
+          <p><strong>Product Name:</strong> ${data.productName || 'Not specified'}</p>
+        `;
+      }
+    }
+
+    async function handleAccountUpdate(e) {
+      e.preventDefault();
+      const name = document.getElementById('account-name').value.trim();
+      const productName = document.getElementById('account-product').value.trim();
+      const industry = userRole === 'master' ? document.getElementById('account-industry').value.trim() : null;
+
+      if (!name || !productName) {
+        showMessage('account-msg', 'Please enter your full name and product name.', 'error');
+        return;
+      }
+
       try {
         showMessage('account-msg', 'Updating profile...', 'info');
-        if (userRole === 'master') {
-          await db.collection('users').doc(currentUser.uid).update({
-            name,
-            details,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
-          userData.name = name;
-          userData.details = details;
-          console.log('Profile updated:', { name, details });
-          showMessage('account-msg', 'Profile updated successfully!', 'success');
-          renderAccountInfo();
-        } else {
-          await db.collection('profileRequests').add({
-            userId: currentUser.uid,
-            newName: name,
-            newDetails: details,
-            status: 'pending',
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
-          showMessage('account-msg', 'Update request submitted to admin for approval.', 'info');
-        }
+        const userDoc = await db.collection('users').doc(currentUser.uid).get();
+        const existingData = userDoc.exists ? userDoc.data() : {};
+        await db.collection('users').doc(currentUser.uid).set({
+          name: name,
+          industry: industry || existingData.industry || null,
+          industryCode: existingData.industryCode || null,
+          productName: productName
+        }, { merge: true });
+        await currentUser.updateProfile({ displayName: name });
+        userProductName = productName;
+        showMessage('account-msg', 'Profile updated successfully!', 'success');
+        hideElement('account-form');
+        showElement('edit-account-btn');
+        loadAccountInfo();
       } catch (err) {
-        console.error('Account update error:', err);
-        showMessage('account-msg', err.message, 'error');
+        showMessage('account-msg', 'Error updating profile: ' + err.message, 'error');
       }
     }
 
-    function renderAccountInfo() {
-      const infoDiv = document.getElementById('account-info');
-      infoDiv.innerHTML = `
-        <p><strong>Email:</strong> ${userData.email || 'Not set'}</p>
-        <p><strong>Name:</strong> ${userData.name || 'Not set'}</p>
-        <p><strong>Details:</strong> ${userData.details || 'Not set'}</p>
-        <p><strong>Role:</strong> ${userRole || 'Not set'}</p>
-        <p><strong>Industry Code:</strong> ${userData.industryCode || 'Not set'}</p>
-      `;
-      document.getElementById('account-name').value = userData.name || '';
-      document.getElementById('account-details').value = userData.details || '';
-    }
-
-    // Template Functions
+    // Template Page Functions
     async function loadTemplates() {
-      const templateList = document.getElementById('template-list');
-      templateList.innerHTML = '';
-      let templates = [];
+      console.log('loadTemplates called');
+      if (!currentUser) {
+        console.error('No current user, cannot load templates');
+        showMessage('template-status', 'Please sign in to load templates.', 'error');
+        return;
+      }
       try {
         if (userRole === 'master') {
-          const snapshot = await db.collection('templates').get();
-          templates = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          userTemplates = ['modern', 'classic', 'minimalist'];
         } else {
-          if (!userData.industryCode) {
-            templateList.innerHTML = '<p>No industry code set for your account. Please contact admin.</p>';
+          const userDoc = await db.collection('users').doc(currentUser.uid).get();
+          if (!userDoc.exists) {
+            console.error('User document not found for UID:', currentUser.uid);
+            showMessage('template-status', 'User profile not found. Please set up your profile.', 'error');
             return;
           }
-          const snapshot = await db.collection('templates').where('code', '==', userData.industryCode).get();
-          templates = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          const data = userDoc.data();
+          userTemplates = data.template ? [data.template] : [];
+          userProductName = data.productName || 'Product';
+          userIndustryCode = data.industryCode || null;
         }
-        if (templates.length === 0) {
-          templateList.innerHTML = '<p>No templates available for your industry code.</p>';
+        console.log('userTemplates:', userTemplates, 'userProductName:', userProductName, 'userIndustryCode:', userIndustryCode);
+
+        if (!userProductName) {
+          console.error('userProductName is empty or undefined');
+          showMessage('template-status', 'Product name not set. Please update your profile.', 'error');
+          return;
+        }
+
+        const checkboxes = document.getElementById('template-checkboxes');
+        if (!checkboxes) {
+          console.error('template-checkboxes element not found');
+          showMessage('template-status', 'Template selection UI not found.', 'error');
+          return;
+        }
+        checkboxes.innerHTML = userTemplates.map(template => `
+          <label><input type="checkbox" value="${template}" ${template === userTemplates[0] ? 'checked' : ''}> ${template.charAt(0).toUpperCase() + template.slice(1)}</label>
+        `).join('');
+        
+        const productDisplay = document.getElementById('product-display');
+        if (productDisplay) {
+          productDisplay.textContent = `Product: ${userProductName}`;
+          showElement('product-display');
         } else {
-          templates.forEach(template => {
-            const div = document.createElement('div');
-            div.innerHTML = `
-              <label>
-                <input type="checkbox" value="${template.id}" data-name="${template.name}">
-                ${template.name} (Code: ${template.code})
-              </label>
-            `;
-            templateList.appendChild(div);
-          });
+          console.error('product-display element not found');
+          showMessage('template-status', 'Product display UI not found.', 'error');
         }
-        console.log('Templates loaded:', templates);
+
+        // Update prompt display
+        function updatePromptDisplay() {
+          const promptDisplay = document.getElementById('prompt-display');
+          if (!promptDisplay) {
+            console.error('prompt-display element not found');
+            showMessage('template-status', 'Prompt display UI not found.', 'error');
+            return;
+          }
+          const selectedTemplates = Array.from(document.querySelectorAll('#template-checkboxes input:checked')).map(input => input.value);
+          const promptText = selectedTemplates.length > 0 
+            ? `Generate a design for ${userProductName} in ${selectedTemplates.join(', ')} style`
+            : `Select at least one template to generate a design for ${userProductName}`;
+          promptDisplay.textContent = promptText;
+          showElement('prompt-display');
+          console.log(`Updated prompt display: ${promptText}, computed display: ${window.getComputedStyle(promptDisplay).display}`);
+          // Verify visibility
+          if (window.getComputedStyle(promptDisplay).display === 'none') {
+            console.error('prompt-display is still hidden after showElement');
+            promptDisplay.style.display = 'block'; // Force visibility
+          }
+        }
+
+        // Initial prompt display
+        try {
+          updatePromptDisplay();
+        } catch (err) {
+          console.error('Error in updatePromptDisplay:', err);
+          showMessage('template-status', 'Error loading prompt display: ' + err.message, 'error');
+        }
+
+        // Add event listeners to checkboxes to update prompt
+        document.querySelectorAll('#template-checkboxes input').forEach(checkbox => {
+          checkbox.addEventListener('change', updatePromptDisplay);
+        });
       } catch (err) {
-        console.error('Error loading templates:', err);
-        updateStatus('template-status', 'Error loading templates: ' + err.message, 'error');
+        console.error('Error in loadTemplates:', err);
+        showMessage('template-status', 'Error loading templates: ' + err.message, 'error');
       }
     }
 
     async function generateImages() {
       if (!currentUser) {
-        updateStatus('template-status', '⚠️ Please sign in first.', 'error');
+        showMessage('template-status', 'Please sign in first.', 'error');
         return;
       }
 
-      const selectedTemplates = Array.from(document.querySelectorAll('#template-list input:checked')).map(input => ({
-        id: input.value,
-        name: input.dataset.name
-      }));
+      const selectedTemplates = Array.from(document.querySelectorAll('#template-checkboxes input:checked')).map(input => input.value);
       if (selectedTemplates.length === 0) {
-        updateStatus('template-status', '⚠️ Please select at least one template.', 'error');
+        showMessage('template-status', 'Please select at least one template.', 'error');
         return;
       }
 
-      const prompt = `Generate an image based on the template${selectedTemplates.length > 1 ? 's' : ''}: ${selectedTemplates.map(t => t.name).join(', ')}`;
-      const [w, h] = [768, 1024]; // Default size
-      bothBadCount = 0;
+      if (generationCount >= 20) {
+        showMessage('template-status', 'Maximum regeneration limit reached.', 'error');
+        return;
+      }
 
-      updateStatus('template-status', '🎨 Generating images...', 'working');
-      document.getElementById('generate-images').disabled = true;
+      const prompt = `Generate a design for ${userProductName} in ${selectedTemplates.join(', ')} style`;
+      const [w, h] = [768, 1024]; // Default size for simplicity
+      showMessage('template-status', 'Generating images...', 'info');
+      document.getElementById('generate-images-btn').disabled = true;
 
       try {
-        const items = await generateTwoImages(prompt, w, h);
-        renderGeneratedImages(items, selectedTemplates.map(t => t.id));
-        showElement('feedback-section');
-        updateStatus('template-status', '✅ Images generated successfully!', 'success');
-      } catch (e) {
-        console.error('Image generation error:', e);
-        updateStatus('template-status', `❌ Error: ${e.message || e}`, 'error');
+        const items = pollinationsUrls(prompt, 2, w, h, Date.now()).map(u => ({ provider: 'pollinations', url: u }));
+        renderImages(items);
+        generationCount++;
+
+        // Save to Firestore
+        const generationRef = db.collection('generations').doc();
+        await generationRef.set({
+          userId: currentUser.uid,
+          templates: selectedTemplates,
+          productName: userProductName,
+          images: items.map(item => item.url),
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        // Keep only the last three records
+        try {
+          const userGenerations = await db.collection('generations')
+            .where('userId', '==', currentUser.uid)
+            .orderBy('createdAt', 'desc')
+            .get();
+          const toDelete = userGenerations.docs.slice(3);
+          toDelete.forEach(doc => doc.ref.delete());
+        } catch (queryErr) {
+          console.error('Error cleaning up old generations:', queryErr);
+          showMessage('template-status', 'Images generated, but failed to clean up old records. Please try again or contact support.', 'error');
+          return;
+        }
+
+        showMessage('template-status', 'Images generated successfully!', 'success');
+      } catch (err) {
+        let errorMessage = 'Error generating images. Please try again.';
+        if (err.message.includes('requires an index')) {
+          errorMessage = 'Database configuration needed. Please contact the site administrator to set up the required index.';
+        }
+        showMessage('template-status', errorMessage, 'error');
+        console.error('Generation error:', err);
       } finally {
-        document.getElementById('generate-images').disabled = false;
+        document.getElementById('generate-images-btn').disabled = false;
       }
     }
 
-    async function generateTwoImages(prompt, width, height) {
-      const urls = pollinationsUrls(prompt, 2, width, height, Date.now());
-      return urls.map(url => ({ provider: 'pollinations', url }));
-    }
-
-    function renderGeneratedImages(items, templateIds) {
+    function renderImages(items) {
       const container = document.getElementById('generated-images');
       container.innerHTML = '';
       items.forEach((item, idx) => {
@@ -890,317 +1233,131 @@
         card.className = 'card';
         card.innerHTML = `
           <div class="badge">${item.provider}</div>
-          <img src="${item.url}" alt="Generated image ${idx + 1}" loading="lazy"/>
+          <img src="${item.url}" alt="Generated image ${idx + 1}"/>
+          <div class="image-feedback">
+            <button onclick="downloadImage('${item.url}', ${idx})">I like this</button>
+            ${idx === 0 ? `<button onclick="downloadImage('${items[1].url}', 1)">I like that</button>` : ''}
+            ${idx === 0 ? `<button onclick="handleBothBad()">Both bad</button>` : ''}
+          </div>
         `;
         container.appendChild(card);
       });
-      saveGenerationRecord(items, templateIds);
+      console.log('Rendered images:', items.length);
     }
 
-    async function saveGenerationRecord(items, templateIds) {
-      try {
-        const record = {
-          userId: currentUser.uid,
-          templateIds,
-          images: items.map(item => item.url),
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
-        await db.collection('generations').add(record);
-        console.log('Generation record saved:', record);
-        // Keep only the last 3 records
-        const snapshot = await db.collection('generations')
-          .where('userId', '==', currentUser.uid)
-          .orderBy('createdAt', 'desc')
-          .get();
-        const records = snapshot.docs;
-        if (records.length > 3) {
-          for (let i = 3; i < records.length; i++) {
-            await db.collection('generations').doc(records[i].id).delete();
-          }
-        }
-      } catch (err) {
-        console.error('Error saving generation record:', err);
-      }
+    function downloadImage(url, idx) {
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `generated-image-${idx + 1}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      showMessage('template-status', `Image ${idx + 1} downloaded!`, 'success');
     }
 
-    async function handleFeedback(action, items, templateIds) {
-      try {
-        if (action === 'like-first' || action === 'like-second') {
-          const index = action === 'like-first' ? 0 : 1;
-          const url = items[index].url;
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = `generated-image-${Date.now()}.png`;
-          link.click();
-          updateStatus('template-status', '✅ Image downloaded!', 'success');
-          hideElement('feedback-section');
-        } else if (action === 'both-bad') {
-          if (bothBadCount >= MAX_BOTH_BAD) {
-            updateStatus('template-status', '❌ Maximum regeneration attempts reached.', 'error');
-            hideElement('feedback-section');
-            return;
-          }
-          bothBadCount++;
-          const selectedTemplates = Array.from(document.querySelectorAll('#template-list input:checked')).map(input => ({
-            id: input.value,
-            name: input.dataset.name
-          }));
-          const prompt = `Generate an image based on the template${selectedTemplates.length > 1 ? 's' : ''}: ${selectedTemplates.map(t => t.name).join(', ')}`;
-          const [w, h] = [768, 1024];
-          updateStatus('template-status', '🎨 Regenerating images...', 'working');
-          document.getElementById('generate-images').disabled = true;
-          try {
-            const newItems = await generateTwoImages(prompt, w, h);
-            renderGeneratedImages(newItems, selectedTemplates.map(t => t.id));
-            updateStatus('template-status', '✅ New images generated!', 'success');
-          } catch (e) {
-            console.error('Regeneration error:', e);
-            updateStatus('template-status', `❌ Error: ${e.message || e}`, 'error');
-          } finally {
-            document.getElementById('generate-images').disabled = false;
-          }
-        }
-      } catch (err) {
-        console.error('Feedback error:', err);
-        updateStatus('template-status', `❌ Error: ${err.message}`, 'error');
-      }
+    function handleBothBad() {
+      generationCount++;
+      generateImages();
     }
 
+    // Past Records Functions
     async function loadRecords() {
       const recordsList = document.getElementById('records-list');
       recordsList.innerHTML = '';
       try {
-        const snapshot = await db.collection('generations')
+        const generations = await db.collection('generations')
           .where('userId', '==', currentUser.uid)
           .orderBy('createdAt', 'desc')
           .limit(3)
           .get();
-        snapshot.forEach(doc => {
-          const record = doc.data();
-          record.images.forEach((url, idx) => {
+
+        if (generations.empty) {
+          showMessage('records-msg', 'No generation records found.', 'info');
+          return;
+        }
+
+        generations.forEach(doc => {
+          const data = doc.data();
+          data.images.forEach((url, idx) => {
             const card = document.createElement('div');
             card.className = 'card';
             card.innerHTML = `
-              <img src="${url}" alt="Past image ${idx + 1}" loading="lazy"/>
-              <button class="btn btn-small" onclick="downloadImage('${url}')">Download</button>
+              <div class="badge">${data.templates.join(', ')} (${data.productName || 'Product'})</div>
+              <img src="${url}" alt="Generated image"/>
+              <button onclick="downloadImage('${url}', ${idx})" class="btn">Download</button>
             `;
             recordsList.appendChild(card);
           });
         });
-        console.log('Records loaded:', snapshot.size);
+        hideMessage('records-msg');
       } catch (err) {
-        console.error('Error loading records:', err);
+        showMessage('records-msg', 'Error loading records: ' + err.message, 'error');
       }
     }
 
-    function downloadImage(url) {
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `past-image-${Date.now()}.png`;
-      link.click();
-    }
+    // Create Account (Master) Functions
+    async function handleCreateAccount(e) {
+      e.preventDefault();
+      if (userRole !== 'master') {
+        showMessage('create-account-msg', 'Unauthorized access.', 'error');
+        console.log('Unauthorized access attempt to create-account-page');
+        return;
+      }
 
-    // Master Functions
-    async function createTemplate(name, code) {
+      const industryName = document.getElementById('industry-name').value.trim();
+      const template = document.getElementById('industry-template').value;
+      const productName = document.getElementById('industry-product').value.trim();
+
+      if (!industryName || !template || !productName) {
+        showMessage('create-account-msg', 'Please fill all fields.', 'error');
+        console.log('Missing fields: industryName=', industryName, 'template=', template, 'productName=', productName);
+        return;
+      }
+
       try {
-        showMessage('master-msg', 'Creating template...', 'info');
-        if (!code) code = Math.floor(100000 + Math.random() * 900000).toString();
-        await db.collection('templates').add({
-          name,
-          code,
-          createdBy: currentUser.uid,
+        showMessage('create-account-msg', 'Generating industry code...', 'info');
+        const industryCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+        console.log('Generated industry code:', industryCode);
+
+        await db.collection('industryCodes').doc(industryCode).set({
+          industry: industryName,
+          template: template,
+          productName: productName,
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
-        console.log('Template created:', { name, code });
-        showMessage('master-msg', 'Template created successfully!', 'success');
-        renderTemplateManagement();
-      } catch (err) {
-        console.error('Template creation error:', err);
-        showMessage('master-msg', err.message, 'error');
-      }
-    }
+        console.log('Industry code saved to Firestore:', industryCode);
 
-    async function uploadTemplates(file, uploadCode) {
-      try {
-        showMessage('master-msg', 'Processing template file...', 'info');
-        const templates = await processXlsxFile(file);
-        if (!templates.length) {
-          showMessage('master-msg', 'No valid templates found in file.', 'error');
+        const codeSpan = document.getElementById('industry-code');
+        if (!codeSpan) {
+          console.error('industry-code span not found in DOM');
+          showMessage('create-account-msg', 'Error displaying code: UI element missing.', 'error');
           return;
         }
-        const batch = db.batch();
-        templates.forEach(name => {
-          const templateCode = uploadCode || Math.floor(100000 + Math.random() * 900000).toString();
-          const docRef = db.collection('templates').doc();
-          batch.set(docRef, {
-            name,
-            code: templateCode,
-            createdBy: currentUser.uid,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
-        });
-        await batch.commit();
-        console.log('Templates uploaded:', templates);
-        showMessage('master-msg', `Successfully uploaded ${templates.length} templates!`, 'success');
-        renderTemplateManagement();
+        codeSpan.textContent = industryCode;
+        console.log('Set industry-code span to:', industryCode);
+
+        // Ensure UI updates after Firestore write
+        setTimeout(() => {
+          showElement('generated-code');
+          console.log('Showing generated-code div');
+          const generatedCodeDiv = document.getElementById('generated-code');
+          if (generatedCodeDiv.classList.contains('show')) {
+            console.log('generated-code div is visible with classes:', generatedCodeDiv.className);
+          } else {
+            console.error('generated-code div not visible, classes:', generatedCodeDiv.className);
+            generatedCodeDiv.style.display = 'block';
+          }
+          showMessage('create-account-msg', 'Industry code generated successfully!', 'success');
+        }, 100);
+
+        document.getElementById('create-account-form').reset();
       } catch (err) {
-        console.error('Template upload error:', err);
-        showMessage('master-msg', 'Error uploading templates: ' + err.message, 'error');
+        showMessage('create-account-msg', 'Error generating code: ' + err.message, 'error');
+        console.error('Error in handleCreateAccount:', err);
       }
     }
 
-    async function deleteTemplate(templateId) {
-      try {
-        showMessage('master-msg', 'Deleting template...', 'info');
-        await db.collection('templates').doc(templateId).delete();
-        console.log('Template deleted:', templateId);
-        showMessage('master-msg', 'Template deleted successfully!', 'success');
-        renderTemplateManagement();
-      } catch (err) {
-        console.error('Template deletion error:', err);
-        showMessage('master-msg', err.message, 'error');
-      }
-    }
-
-    async function generateIndustryCode() {
-      const code = Math.floor(100000 + Math.random() * 900000).toString();
-      document.getElementById('industry-code').value = code;
-      showMessage('master-msg', 'Industry code generated!', 'success');
-    }
-
-    async function renderTemplateManagement() {
-      const managementDiv = document.getElementById('template-management');
-      managementDiv.innerHTML = '<h3>Manage Templates</h3>';
-      try {
-        const snapshot = await db.collection('templates').get();
-        const templates = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        if (templates.length === 0) {
-          managementDiv.innerHTML += '<p>No templates available.</p>';
-        } else {
-          templates.forEach(template => {
-            const div = document.createElement('div');
-            div.innerHTML = `
-              <p>${template.name} (Code: ${template.code})
-              <button class="btn btn-small" onclick="deleteTemplate('${template.id}')">Delete</button></p>
-            `;
-            managementDiv.appendChild(div);
-          });
-        }
-        console.log('Template management rendered:', templates);
-      } catch (err) {
-        console.error('Error rendering templates:', err);
-        showMessage('master-msg', 'Error loading templates: ' + err.message, 'error');
-      }
-    }
-
-    async function renderApproveRequests() {
-      const div = document.getElementById('approve-requests');
-      div.innerHTML = '<h3>Approve Profile Updates</h3>';
-      try {
-        const snapshot = await db.collection('profileRequests').where('status', '==', 'pending').get();
-        if (snapshot.empty) {
-          div.innerHTML += '<p>No pending requests.</p>';
-          return;
-        }
-        for (const doc of snapshot.docs) {
-          const req = doc.data();
-          const userDoc = await db.collection('users').doc(req.userId).get();
-          const user = userDoc.data();
-          const reqDiv = document.createElement('div');
-          reqDiv.innerHTML = `
-            <p>User: ${user.email}</p>
-            <p>Current Name: ${user.name}</p>
-            <p>New Name: ${req.newName}</p>
-            <p>Current Details: ${user.details}</p>
-            <p>New Details: ${req.newDetails}</p>
-            <button class="btn btn-small" onclick="approveRequest('${doc.id}', '${req.userId}')">Approve</button>
-            <button class="btn btn-small" onclick="denyRequest('${doc.id}')">Deny</button>
-          `;
-          div.appendChild(reqDiv);
-        }
-      } catch (err) {
-        console.error('Error rendering approve requests:', err);
-        showMessage('master-msg', 'Error loading requests: ' + err.message, 'error');
-      }
-    }
-
-    window.approveRequest = async function(reqId, userId) {
-      try {
-        const req = (await db.collection('profileRequests').doc(reqId).get()).data();
-        await db.collection('users').doc(userId).update({
-          name: req.newName,
-          details: req.newDetails,
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        await db.collection('profileRequests').doc(reqId).update({ status: 'approved' });
-        showMessage('master-msg', 'Request approved!', 'success');
-        renderApproveRequests();
-      } catch (err) {
-        console.error('Approve error:', err);
-        showMessage('master-msg', err.message, 'error');
-      }
-    }
-
-    window.denyRequest = async function(reqId) {
-      try {
-        await db.collection('profileRequests').doc(reqId).update({ status: 'denied' });
-        showMessage('master-msg', 'Request denied.', 'info');
-        renderApproveRequests();
-      } catch (err) {
-        console.error('Deny error:', err);
-        showMessage('master-msg', err.message, 'error');
-      }
-    }
-
-    async function renderManageUsers() {
-      const div = document.getElementById('manage-users');
-      div.innerHTML = '<h3>Manage Users</h3>';
-      try {
-        const snapshot = await db.collection('users').get();
-        snapshot.forEach(doc => {
-          const user = doc.data();
-          const userDiv = document.createElement('div');
-          userDiv.innerHTML = `
-            <p>Email: ${user.email}</p>
-            <input id="name-${doc.id}" value="${user.name || ''}" placeholder="Name">
-            <textarea id="details-${doc.id}" placeholder="Details">${user.details || ''}</textarea>
-            <input id="code-${doc.id}" value="${user.industryCode || ''}" placeholder="Industry Code">
-            <select id="role-${doc.id}">
-              <option value="client" ${user.role === 'client' ? 'selected' : ''}>Client</option>
-              <option value="master" ${user.role === 'master' ? 'selected' : ''}>Master</option>
-            </select>
-            <button class="btn btn-small" onclick="updateUser('${doc.id}')">Save</button>
-          `;
-          div.appendChild(userDiv);
-        });
-      } catch (err) {
-        console.error('Error rendering manage users:', err);
-        showMessage('master-msg', 'Error loading users: ' + err.message, 'error');
-      }
-    }
-
-    window.updateUser = async function(uid) {
-      try {
-        const name = document.getElementById(`name-${uid}`).value;
-        const details = document.getElementById(`details-${uid}`).value;
-        const code = document.getElementById(`code-${uid}`).value;
-        const role = document.getElementById(`role-${uid}`).value;
-        await db.collection('users').doc(uid).update({
-          name,
-          details,
-          industryCode: code,
-          role,
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        showMessage('master-msg', 'User updated!', 'success');
-        renderManageUsers();
-      } catch (err) {
-        console.error('Update user error:', err);
-        showMessage('master-msg', err.message, 'error');
-      }
-    }
-
-    // Image Generation Functions
+    // AI Generation Functions
     function pollinationsUrls(prompt, count, width, height, seed) {
       const quoted = encodeURIComponent(prompt);
       const base = `https://image.pollinations.ai/prompt/${quoted}?width=${width}&height=${height}&n=1`;
@@ -1208,16 +1365,9 @@
       return Array.from({length: count}, (_, i) => `${base}&seed=${startSeed + i}`);
     }
 
-    function updateStatus(id, message, type = '') {
-      const statusEl = document.getElementById(id);
-      if (statusEl) {
-        statusEl.textContent = message;
-        statusEl.className = type ? `status status-${type}` : 'status';
-      }
-    }
-
     // Event Listeners
     document.addEventListener('DOMContentLoaded', function() {
+      console.log('DOM fully loaded');
       // Login form
       document.getElementById('login-form').addEventListener('submit', function(e) {
         e.preventDefault();
@@ -1226,103 +1376,174 @@
         handleLogin(email, password);
       });
 
-      // Registration form
+      // Password reset
+      document.getElementById('reset-password-link').addEventListener('click', resetPassword);
+
+      // Registration events
+      document.getElementById('send-code-btn').addEventListener('click', sendVerificationCode);
+      document.getElementById('verify-code-btn').addEventListener('click', verifyCode);
       document.getElementById('register-form').addEventListener('submit', function(e) {
         e.preventDefault();
-        const email = document.getElementById('register-email').value;
-        const password = document.getElementById('register-password').value;
-        const code = document.getElementById('register-code').value.trim();
-        handleRegister(email, password, code);
-      });
-
-      // Setup form
-      document.getElementById('setup-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const name = document.getElementById('setup-name').value;
-        const details = document.getElementById('setup-details').value;
-        handleSetup(name, details);
-      });
-
-      // Account form
-      document.getElementById('account-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const name = document.getElementById('account-name').value;
-        const details = document.getElementById('account-details').value;
-        handleAccountUpdate(name, details);
+        completeRegistration();
       });
 
       // Navigation buttons
-      document.getElementById('setup-btn').addEventListener('click', () => {
-        showPage('setup-page');
+      document.getElementById('back-to-step1').addEventListener('click', function() {
+        hideElement('register-step2');
+        showElement('register-step1');
       });
 
-      document.getElementById('account-btn').addEventListener('click', () => {
-        renderAccountInfo();
-        showPage('account-page');
+      document.getElementById('back-to-step2').addEventListener('click', function() {
+        hideElement('register-step3');
+        showElement('register-step2');
       });
 
-      document.getElementById('template-btn').addEventListener('click', () => {
-        loadTemplates();
-        showPage('template-page');
+      // Setup form
+      document.getElementById('setup-form').addEventListener('submit', handleSetup);
+
+      // Account form
+      document.getElementById('edit-account-btn').addEventListener('click', function() {
+        showElement('account-form');
+        hideElement('edit-account-btn');
+        const userDoc = db.collection('users').doc(currentUser.uid).get().then(doc => {
+          if (doc.exists) {
+            document.getElementById('account-name').value = doc.data().name || '';
+            document.getElementById('account-product').value = doc.data().productName || '';
+            if (userRole === 'master') {
+              document.getElementById('account-industry').value = doc.data().industry || '';
+            }
+          }
+        });
       });
 
-      document.getElementById('records-btn').addEventListener('click', () => {
-        loadRecords();
-        showPage('records-page');
+      document.getElementById('account-form').addEventListener('submit', handleAccountUpdate);
+      document.getElementById('cancel-edit').addEventListener('click', function() {
+        hideElement('account-form');
+        showElement('edit-account-btn');
       });
 
-      document.getElementById('master-btn').addEventListener('click', () => {
-        renderTemplateManagement();
-        renderApproveRequests();
-        renderManageUsers();
-        showPage('master-page');
-      });
+      // Template generation
+      document.getElementById('generate-images-btn').addEventListener('click', generateImages);
 
+      // Create account (master)
+      document.getElementById('create-account-form').addEventListener('submit', handleCreateAccount);
+
+      // Logout
       document.getElementById('logout-btn').addEventListener('click', handleLogout);
 
-      // Template page
-      document.getElementById('generate-images').addEventListener('click', generateImages);
-      document.getElementById('like-first').addEventListener('click', () => {
-        const items = Array.from(document.querySelectorAll('#generated-images img')).map(img => ({ url: img.src }));
-        const templateIds = Array.from(document.querySelectorAll('#template-list input:checked')).map(input => input.value);
-        handleFeedback('like-first', items, templateIds);
-      });
-      document.getElementById('like-second').addEventListener('click', () => {
-        const items = Array.from(document.querySelectorAll('#generated-images img')).map(img => ({ url: img.src }));
-        const templateIds = Array.from(document.querySelectorAll('#template-list input:checked')).map(input => input.value);
-        handleFeedback('like-second', items, templateIds);
-      });
-      document.getElementById('both-bad').addEventListener('click', () => {
-        const items = Array.from(document.querySelectorAll('#generated-images img')).map(img => ({ url: img.src }));
-        const templateIds = Array.from(document.querySelectorAll('#template-list input:checked')).map(input => input.value);
-        handleFeedback('both-bad', items, templateIds);
-      });
-
-      // Master controls
-      document.getElementById('create-template').addEventListener('click', () => {
-        const name = document.getElementById('template-name').value.trim();
-        const code = document.getElementById('template-code').value.trim();
-        if (name) createTemplate(name, code);
-        else showMessage('master-msg', 'Template name is required.', 'error');
-      });
-      document.getElementById('upload-template').addEventListener('click', () => {
-        const fileInput = document.getElementById('template-file');
-        const uploadCode = document.getElementById('upload-code').value.trim();
-        if (fileInput.files.length) {
-          uploadTemplates(fileInput.files[0], uploadCode);
+      // Initialize
+      auth.onAuthStateChanged(user => {
+        if (user) {
+          currentUser = user;
+          checkUserRole().then(() => {
+            loadAccountInfo();
+            showMainApp();
+          });
         } else {
-          showMessage('master-msg', 'Please select an XLSX file.', 'error');
+          showAuth();
         }
       });
-      document.getElementById('generate-code').addEventListener('click', generateIndustryCode);
-
-      // Initialize
-      showAuth();
     });
-
-    // Expose functions for inline onclick
-    window.deleteTemplate = deleteTemplate;
-    window.downloadImage = downloadImage;
   </script>
+// === TEMPLATE MANAGEMENT LOGIC (Master Only) ===
+let industryTemplates = [];
+let selectedTemplateIdx = -1;
+
+function updateTemplateListUI() {
+  const sel = document.getElementById('industry-template');
+  if (!sel) return;
+  sel.innerHTML = '';
+  industryTemplates.forEach((tpl, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = tpl.name;
+    sel.appendChild(opt);
+  });
+  const addOpt = document.createElement('option');
+  addOpt.value = '';
+  addOpt.textContent = '-- Add new template --';
+  sel.appendChild(addOpt);
+  sel.value = selectedTemplateIdx >= 0 ? String(selectedTemplateIdx) : '';
+}
+
+function showTemplateNameInput(show, rename=false) {
+  let el = document.getElementById('template-name-group');
+  if (!el) return;
+  el.style.display = show ? 'block' : 'none';
+  document.getElementById('template-name-label').textContent = rename ? 'Rename Template Name' : 'New Template Name';
+  document.getElementById('template-name-save').textContent = rename ? 'Rename' : 'Add';
+}
+
+function setupCreateAccountMasterUI() {
+  industryTemplates = [];
+  selectedTemplateIdx = -1;
+  updateTemplateListUI();
+  showElement('create-account-link');
+  document.getElementById('add-template-btn').onclick = function() {
+    showTemplateNameInput(true, false);
+    document.getElementById('template-name').value = '';
+  };
+  document.getElementById('rename-template-btn').onclick = function() {
+    if (selectedTemplateIdx < 0) {
+      showMessage('create-account-msg', 'Select a template first.', 'error');
+      return;
+    }
+    showTemplateNameInput(true, true);
+    document.getElementById('template-name').value = industryTemplates[selectedTemplateIdx].name;
+  };
+  document.getElementById('template-name-save').onclick = function() {
+    const val = document.getElementById('template-name').value.trim();
+    if (!val) return;
+    if (document.getElementById('template-name-save').textContent === 'Rename' && selectedTemplateIdx >= 0) {
+      industryTemplates[selectedTemplateIdx].name = val;
+    } else {
+      industryTemplates.push({ name: val });
+      selectedTemplateIdx = industryTemplates.length - 1;
+    }
+    updateTemplateListUI();
+    showTemplateNameInput(false);
+  };
+  document.getElementById('industry-template').onchange = function() {
+    if (this.value === '') {
+      showTemplateNameInput(true, false);
+    } else {
+      selectedTemplateIdx = parseInt(this.value, 10);
+      showTemplateNameInput(false);
+    }
+  };
+  document.getElementById('create-account-form').onsubmit = async function(e) {
+    e.preventDefault();
+    if (userRole !== 'master') return;
+    const industryName = document.getElementById('industry-name').value.trim();
+    const productName = document.getElementById('industry-product').value.trim();
+    if (!industryName || !productName || industryTemplates.length === 0 || selectedTemplateIdx < 0) {
+      showMessage('create-account-msg', 'Enter all fields, add/select a template.', 'error');
+      return;
+    }
+    const selectedTemplate = industryTemplates[selectedTemplateIdx];
+    const code = Math.random().toString(36).substr(2, 7).toUpperCase();
+    await db.collection('industryCodes').doc(code).set({
+      industry: industryName,
+      templates: industryTemplates,
+      template: selectedTemplate,
+      productName: productName,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    document.getElementById('industry-code').textContent = code;
+    showElement('generated-code');
+    showMessage('create-account-msg', 'Industry and templates saved! Share code with users.', 'success');
+  };
+}
+
+// Patch or extend your checkUserRole so master sees the Template Management page
+const origCheckUserRole = typeof checkUserRole === "function" ? checkUserRole : undefined;
+checkUserRole = async function() {
+  if (currentUser && currentUser.email === 'langtechgroup5@gmail.com') {
+    userRole = 'master';
+    setupCreateAccountMasterUI();
+    return;
+  }
+  if (typeof origCheckUserRole === "function") await origCheckUserRole();
+};
 </body>
 </html>
